@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeaveRequest extends Model
 {
-    protected $fillable = ['user_id', 'type', 'from_date', 'to_date', 'reason', 'status'];
+    protected $fillable = ['user_id', 'employee_id', 'type', 'from_date', 'to_date', 'reason', 'status'];
 
     protected function casts(): array
     {

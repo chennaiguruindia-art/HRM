@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\LeaveRequest;
+use App\Models\Notification;
+use App\Models\SalaryCalculation;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,6 +17,170 @@ class EmployeeController extends Controller
     public function login()
     {
         return view('employee.login');
+    }
+
+    public function dashboard(string $employeeId)
+    {
+        $employee = Employee::with('branch')->where('employee_id', $employeeId)->first();
+
+        if (!$employee) {
+            return redirect()->route('employee.login');
+        }
+
+        $photo = $employee->photo
+            ? asset('employee_profile_pic/' . $employee->photo)
+            : 'https://i.pravatar.cc/64?img=' . ($employee->id % 60);
+
+        $today = Carbon::today();
+        $now = Carbon::now();
+
+        $user = User::where('email', $employee->email)->first();
+
+        $todayAtt = Attendance::where('employee_id', $employee->employee_id)
+            ->whereDate('date', $today)
+            ->first();
+
+        $attendances = Attendance::where('employee_id', $employee->employee_id)
+            ->orderByDesc('date')
+            ->limit(30)
+            ->get();
+
+        $monthStart = $now->copy()->startOfMonth();
+        $monthEnd = $now->copy()->endOfMonth();
+        $monthAtt = Attendance::where('employee_id', $employee->employee_id)
+            ->whereBetween('date', [$monthStart, $monthEnd])
+            ->get();
+
+        $presentCount = $monthAtt->where('status', 'present')->count();
+        $halfDayCount = $monthAtt->where('status', 'half-day')->count();
+        $absentCount = $monthAtt->where('status', 'absent')->count();
+        $onLeaveCount = $monthAtt->where('status', 'On Leave')->count();
+
+        $leaves = LeaveRequest::where(function ($q) use ($employee, $user) {
+            $q->where('employee_id', $employee->employee_id);
+            if ($user) {
+                $q->orWhere('user_id', $user->id);
+            }
+        })->latest()->get();
+
+        $approvedLeaves = $leaves->where('status', 'Approved');
+        $pendingLeaves = $leaves->where('status', 'Pending');
+
+        $paidLeavesTotal = $employee->paid_leaves ?? 1;
+        $usedLeaveDays = 0;
+        foreach ($approvedLeaves as $leave) {
+            $usedLeaveDays += Carbon::parse($leave->from_date)->diffInDays(Carbon::parse($leave->to_date)) + 1;
+        }
+        $remainingLeaves = max(0, $paidLeavesTotal - $usedLeaveDays);
+
+        $notifications = Notification::where(function ($q) use ($employee, $user) {
+            $q->where('employee_id', $employee->employee_id);
+            if ($user) {
+                $q->orWhere('user_id', $user->id);
+            }
+        })->latest()->get();
+        $unreadNotifications = $notifications->where('is_read', false)->count();
+
+        $baseSalary = $employee->salary ?? 0;
+        $approvedLeaveDaysThisMonth = 0;
+        foreach ($approvedLeaves as $leave) {
+            $from = Carbon::parse($leave->from_date);
+            $to = Carbon::parse($leave->to_date);
+            if ($from->lte($monthEnd) && $to->gte($monthStart)) {
+                $clampedFrom = $from->lt($monthStart) ? $monthStart->copy() : $from;
+                $clampedTo = $to->gt($monthEnd) ? $monthEnd->copy() : $to;
+                $approvedLeaveDaysThisMonth += $clampedFrom->diffInDays($clampedTo) + 1;
+            }
+        }
+
+        $perDay = $baseSalary / 30;
+
+        $joinDate = $employee->join_date ? Carbon::parse($employee->join_date) : null;
+        if ($joinDate && $joinDate->gt($monthStart)) {
+            $eligibleDays = min(30, (int)$joinDate->copy()->startOfDay()->diffInDays($monthEnd->copy()->startOfDay()) + 1);
+        } else {
+            $eligibleDays = 30;
+        }
+
+        $workedDays = $presentCount + ($halfDayCount * 0.5) + $approvedLeaveDaysThisMonth;
+        $workedDays = min($workedDays, $eligibleDays);
+        $deductibleDays = max(0, $eligibleDays - $workedDays);
+        $finalSalary = max(0, round($perDay * $workedDays, 2));
+
+        $salaryRecords = SalaryCalculation::where('employee_id', $employee->id)
+            ->latest()
+            ->limit(6)
+            ->get();
+
+        return view('employee.dashboard', compact(
+            'employee', 'photo', 'todayAtt', 'attendances',
+            'presentCount', 'halfDayCount', 'absentCount', 'onLeaveCount',
+            'leaves', 'pendingLeaves', 'approvedLeaves',
+            'paidLeavesTotal', 'usedLeaveDays', 'remainingLeaves',
+            'notifications', 'unreadNotifications',
+            'baseSalary', 'approvedLeaveDaysThisMonth', 'perDay',
+            'eligibleDays', 'workedDays',
+            'deductibleDays', 'finalSalary', 'salaryRecords',
+            'now', 'monthStart', 'monthEnd'
+        ));
+    }
+
+    public function storeLeaveRequest(Request $request): JsonResponse
+    {
+        $request->validate([
+            'employee_id' => 'required|string|exists:employees,employee_id',
+            'type' => 'required|string|max:100',
+            'from_date' => 'required|date',
+            'to_date' => 'required|date|after_or_equal:from_date',
+            'reason' => 'nullable|string|max:1000',
+        ]);
+
+        $employee = Employee::where('employee_id', $request->employee_id)->firstOrFail();
+        $user = User::where('email', $employee->email)->first();
+
+        $leave = LeaveRequest::create([
+            'user_id' => $user?->id,
+            'employee_id' => $employee->employee_id,
+            'type' => $request->type,
+            'from_date' => $request->from_date,
+            'to_date' => $request->to_date,
+            'reason' => $request->reason,
+            'status' => 'Pending',
+        ]);
+
+        $admins = User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            Notification::create([
+                'user_id' => $admin->id,
+                'title' => 'New Leave Request',
+                'body' => $employee->name . ' requested ' . $request->type
+                    . ' from ' . $request->from_date . ' to ' . $request->to_date,
+                'type' => 'bi-calendar-event-fill',
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Leave request submitted successfully.',
+            'leave' => $leave,
+        ]);
+    }
+
+    public function markNotificationsRead(Request $request): JsonResponse
+    {
+        $request->validate(['employee_id' => 'required|string|exists:employees,employee_id']);
+
+        $employee = Employee::where('employee_id', $request->employee_id)->firstOrFail();
+        $user = User::where('email', $employee->email)->first();
+
+        Notification::where(function ($q) use ($employee, $user) {
+            $q->where('employee_id', $employee->employee_id);
+            if ($user) {
+                $q->orWhere('user_id', $user->id);
+            }
+        })->where('is_read', false)->update(['is_read' => true]);
+
+        return response()->json(['success' => true]);
     }
 
     public function lookup(Request $request): JsonResponse

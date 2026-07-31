@@ -37,7 +37,7 @@
       font-weight: 700;
       margin-bottom: 4px;
     }
-    .brand .brand-logo { height: 44px; width: auto; object-fit: contain; margin-bottom: 10px; }
+    .brand-logo { height: 44px; width: auto; max-width: 100%; object-fit: contain; margin-bottom: 10px; }
     .brand span { color: #0fb5a3; }
     .brand small { color: #6f7794; font-weight: 500; font-size: .75rem; display: block; margin-top: 2px; }
 
@@ -135,8 +135,21 @@
       color: #6f7794;
       font-size: .8rem;
       text-decoration: none;
+      pointer-events: none;
+      opacity: .55;
     }
     .back-link:hover { color: #fff; }
+    .back-link.enabled {
+      pointer-events: auto;
+      opacity: 1;
+      background: rgba(15,181,163,.15);
+      color: #0fb5a3;
+      border: 1px solid rgba(15,181,163,.4);
+      padding: 9px 20px;
+      border-radius: 30px;
+      font-weight: 600;
+    }
+    .back-link.enabled:hover { background: rgba(15,181,163,.28); color: #0fb5a3; }
 
     .spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; margin: 0 auto; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -189,7 +202,7 @@
 
     <div class="msg" id="msg"></div>
 
-    <a href="/" class="back-link">&larr; Back to Home</a>
+    <a href="/" class="back-link" id="dashLink">&larr; Back to Home</a>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -267,6 +280,9 @@
         $('#empBranch').text(resp.employee.branch);
         $('#empId').text(resp.employee.id);
         $('#empInfo').addClass('show');
+
+        var dashUrl = '{{ route("employee.dashboard", ["employee_id" => "__ID__"]) }}'.replace('__ID__', resp.employee.id);
+        $('#dashLink').attr('href', dashUrl).addClass('enabled');
 
         const att = resp.attendance;
         const clockedIn = att && att.check_in;

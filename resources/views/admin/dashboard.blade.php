@@ -814,6 +814,7 @@
                     <th>Branch</th>
                     <th>Shift</th>
                     <th>Email</th>
+                    <th>Joined</th>
                     <th>Blood Group</th>
                     <th>Salary</th>
                     <th>Status</th>
@@ -850,6 +851,7 @@
                     <th>Branch</th>
                     <th>Shift</th>
                     <th>Email</th>
+                    <th>Joined</th>
                     <th>Blood Group</th>
                     <th>Salary</th>
                     <th>Status</th>
@@ -980,6 +982,32 @@
         <section class="view" id="view-notifications">
           <div class="section-card">
             <div class="section-head">
+              <h5>Send Notification</h5>
+            </div>
+            <form id="sendNotifForm">
+              <div class="row g-2 mb-2">
+                <div class="col-md-5">
+                  <label class="form-label small fw-semibold">Send To</label>
+                  <select id="notifTarget" class="form-select form-select-sm">
+                    <option value="all">All Employees</option>
+                  </select>
+                </div>
+                <div class="col-md-7">
+                  <label class="form-label small fw-semibold">Title</label>
+                  <input type="text" id="notifTitle" class="form-control form-control-sm" placeholder="e.g. Holiday announcement" required>
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">Message</label>
+                <textarea id="notifBody" class="form-control form-control-sm" rows="3" placeholder="Notification message..." required></textarea>
+              </div>
+              <div id="notifSendMsg" class="small mb-2"></div>
+              <button type="submit" class="btn btn-accent btn-sm"><i class="bi bi-send"></i> Send Notification</button>
+            </form>
+          </div>
+
+          <div class="section-card">
+            <div class="section-head">
               <h5>Notification Center</h5>
               <button class="btn btn-ghost btn-sm ms-auto" id="markAllReadBtn">Mark all as read</button>
             </div>
@@ -1069,22 +1097,36 @@
             </div>
             <div class="row g-2 mb-3">
               <div class="col-4">
-                <label class="form-label small">Absent Days</label>
-                <input type="number" min="0" class="form-control" name="absent_days" id="salaryAbsent" readonly>
+                <label class="form-label small">Present Days</label>
+                <input type="number" min="0" class="form-control" id="salaryPresent" readonly>
               </div>
               <div class="col-4">
-                <label class="form-label small">Leave Days</label>
+                <label class="form-label small">Half Days</label>
+                <input type="number" min="0" class="form-control" id="salaryHalfDays" readonly>
+              </div>
+              <div class="col-4">
+                <label class="form-label small">Absent Days</label>
+                <input type="number" min="0" class="form-control" id="salaryAbsent" readonly>
+              </div>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-4">
+                <label class="form-label small">Approved Leave</label>
                 <input type="number" min="0" class="form-control" id="salaryLeaveDays" readonly>
               </div>
               <div class="col-4">
-                <label class="form-label small">Paid Leave Allowance</label>
-                <input type="number" min="0" class="form-control" id="salaryPaidLeaves" readonly>
+                <label class="form-label small">Eligible Days</label>
+                <input type="number" min="0" class="form-control" id="salaryEligible" readonly>
+              </div>
+              <div class="col-4">
+                <label class="form-label small">Deductible Days</label>
+                <input type="number" min="0" class="form-control" id="salaryDeductible" readonly>
               </div>
             </div>
             <div class="row g-2 mb-3">
               <div class="col-6">
-                <label class="form-label small text-muted">Deductible Days <span class="text-danger">(absent + leave &minus; paid)</span></label>
-                <input type="number" min="0" class="form-control" id="salaryDeductible" readonly>
+                <label class="form-label small text-muted">Worked Days <span class="text-muted">(present + half&times;0.5 + leave)</span></label>
+                <input type="number" min="0" class="form-control" id="salaryWorked" readonly>
               </div>
               <div class="col-6">
                 <label class="form-label small fw-bold">Final Salary</label>
@@ -1095,8 +1137,7 @@
               </div>
             </div>
             <div class="alert alert-info small py-2 mb-0">
-              <i class="bi bi-info-circle"></i> Final = Base &minus; (Base &divide; 30 &times; deductible days).
-              Paid leaves are not deducted from salary.
+              <i class="bi bi-info-circle"></i> Final = (Base &divide; 30) &times; worked days. Worked days are capped at eligible days (join-date based). Paid leaves count as worked.
             </div>
           </div>
           <div class="modal-footer">
@@ -1207,6 +1248,7 @@
             <div class="row">
               <div class="col-md-3 mb-3"><label class="form-label small">Age</label><input required type="number" min="18" max="70" class="form-control" name="age"></div>
               <div class="col-md-3 mb-3"><label class="form-label small">Date of Birth</label><input required type="date" class="form-control" name="dob"></div>
+              <div class="col-md-3 mb-3"><label class="form-label small">Join Date</label><input type="date" class="form-control" name="join_date"></div>
               <div class="col-md-3 mb-3"><label class="form-label small">Salary (per month)</label><input type="number" step="0.01" min="0" class="form-control" name="salary" placeholder="0.00"></div>
               <div class="col-md-3 mb-3"><label class="form-label small">Paid Leaves / Month</label><input type="number" min="0" class="form-control" name="paid_leaves" value="1" re></div>
             </div>
@@ -1308,7 +1350,9 @@
       designations: "{{ route('admin.api.designations') }}",
       notifications: "{{ route('admin.api.notifications') }}",
       markRead: "{{ route('admin.api.notifications.read') }}",
+      sendNotification: "{{ route('admin.api.notifications.send') }}",
       salaryCalculations: "{{ route('admin.api.salary-calculations') }}",
+      salaryPreview: "{{ route('admin.api.salary-preview') }}",
       holidays: "{{ route('admin.api.holidays') }}",
       employeeStatus: "{{ route('admin.api.employees.status') }}",
     };
@@ -1454,6 +1498,7 @@
           "<td>" + e.branch + "</td>" +
           "<td class='mono small'>" + fmtTime(e.shiftStart) + " - " + fmtTime(e.shiftEnd) + "</td>" +
           "<td class='text-muted small'>" + e.email + "</td>" +
+          "<td class='mono small'>" + (e.join_date || "--") + "</td>" +
           "<td class='mono small'>" + (e.blood_group || "--") + "</td>" +
           "<td class='mono small'>" + fmtSalary(e.salary) + "</td>" +
           "<td>" + statusToggle(e.id, e.status) + "</td>" +
@@ -1531,6 +1576,7 @@
         form.gender.value = employee.gender;
         form.age.value = employee.age;
         form.dob.value = employee.dob;
+        form.join_date.value = employee.join_date;
         form.employee_id.value = employee.id;
         form.blood_group.value = employee.blood_group || "";
         form.salary.value = employee.salary;
@@ -1665,6 +1711,7 @@
           "<td>" + e.branch + "</td>" +
           "<td class='mono small'>" + fmtTime(e.shiftStart) + " - " + fmtTime(e.shiftEnd) + "</td>" +
           "<td class='text-muted small'>" + e.email + "</td>" +
+          "<td class='mono small'>" + (e.join_date || "--") + "</td>" +
           "<td class='mono small'>" + (e.blood_group || "--") + "</td>" +
           "<td class='mono small'>" + fmtSalary(e.salary) + "</td>" +
           "<td>" + statusToggle(e.id, e.status) + "</td>" +
@@ -1950,6 +1997,57 @@
       });
     });
 
+    /* ---------------- Send notification ---------------- */
+    let notifEmployeeOptions = [];
+
+    function loadNotifTargets() {
+      apiGet(API.employees).then(function(rows) {
+        notifEmployeeOptions = rows || [];
+        $("#notifTarget").html('<option value="all">All Employees</option>' + notifEmployeeOptions.map(function(e) {
+          return "<option value='" + e.id + "'>" + e.id + " - " + e.name + "</option>";
+        }).join(""));
+      });
+    }
+
+    $("#sendNotifForm").on("submit", function(e) {
+      e.preventDefault();
+      const $msg = $("#notifSendMsg");
+      $msg.removeClass("text-danger text-success").text("");
+
+      const target = $("#notifTarget").val();
+      const title = $("#notifTitle").val().trim();
+      const body = $("#notifBody").val().trim();
+      if (!title || !body) {
+        $msg.addClass("text-danger").text("Please fill in the title and message.");
+        return;
+      }
+
+      const btn = $(this).find("button[type=submit]");
+      btn.prop("disabled", true);
+
+      apiPost(API.sendNotification, {
+        target: target,
+        title: title,
+        body: body
+      }).done(function(resp) {
+        $msg.addClass("text-success").text(resp.message || "Notification sent.");
+        $("#notifTitle").val("");
+        $("#notifBody").val("");
+        loadNotifications();
+      }).fail(function(xhr) {
+        const m = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "Failed to send notification.";
+        $msg.addClass("text-danger").text(m);
+      }).always(function() {
+        btn.prop("disabled", false);
+      });
+    });
+
+    const origNotifLoad = loadNotifications;
+    function loadNotifications() {
+      origNotifLoad();
+      if (!$("#notifTarget option[value!='all']").length) loadNotifTargets();
+    }
+
     /* =========================================================================
        SALARY CALCULATIONS
        ========================================================================= */
@@ -1992,40 +2090,54 @@
       const now = new Date();
       $("#salaryMonth").val(now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0"));
       $("#salaryBase").val("");
+      $("#salaryPresent").val(0);
+      $("#salaryHalfDays").val(0);
       $("#salaryAbsent").val(0);
       $("#salaryLeaveDays").val(0);
-      $("#salaryPaidLeaves").val(1);
+      $("#salaryEligible").val(0);
       $("#salaryDeductible").val(0);
+      $("#salaryWorked").val(0);
       $("#salaryFinalDisplay").val("");
       new bootstrap.Modal(document.getElementById("salaryModal")).show();
     }
 
-    function recalcSalary() {
+    function recalcSalary(preview) {
       const base = parseFloat($("#salaryBase").val()) || 0;
-      const absent = parseInt($("#salaryAbsent").val()) || 0;
-      const leaveDays = parseInt($("#salaryLeaveDays").val()) || 0;
-      const paidLeaves = parseInt($("#salaryPaidLeaves").val()) || 0;
-      const deductible = Math.max(0, absent + leaveDays - paidLeaves);
-      const perDay = base / 30;
-      const finalSal = Math.max(0, base - (perDay * deductible));
-      $("#salaryDeductible").val(deductible);
-      $("#salaryFinalDisplay").val(finalSal ? "₹" + finalSal.toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "₹0.00");
+      if (!preview) {
+        $("#salaryFinalDisplay").val(base ? "₹" + base.toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "₹0.00");
+        return;
+      }
+      const p = preview;
+      $("#salaryBase").val(p.base_salary);
+      $("#salaryPresent").val(p.present_days);
+      $("#salaryHalfDays").val(p.half_days);
+      $("#salaryAbsent").val(p.absent_days);
+      $("#salaryLeaveDays").val(p.leave_days);
+      $("#salaryEligible").val(p.eligible_days);
+      $("#salaryDeductible").val(p.deductible_days);
+      $("#salaryWorked").val(p.worked_days);
+      $("#salaryFinalDisplay").val(p.final_salary ? "₹" + Number(p.final_salary).toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "₹0.00");
     }
 
     $("#salaryEmployeeSelect").on("change", function() {
       const opt = $(this).find("option:selected");
       $("#salaryBase").val(opt.data("salary") || 0);
-      $("#salaryPaidLeaves").val(opt.data("paid-leaves") || 1);
-      recalcSalary();
+      recalcSalary(null);
     });
 
-    $(document).on("input", "#salaryAbsent, #salaryLeaveDays", recalcSalary);
+    $(document).on("change", "#salaryEmployeeSelect, #salaryMonth", function() {
+      const emp = $("#salaryEmployeeSelect").val();
+      const month = $("#salaryMonth").val();
+      if (emp && month) {
+        apiGet(API.salaryPreview + "?employee_id=" + encodeURIComponent(emp) + "&month=" + encodeURIComponent(month)).then(function(p) {
+          if (p.success) recalcSalary(p);
+        });
+      }
+    });
 
     $("#salaryForm").on("submit", function(e) {
       e.preventDefault();
       const formData = new FormData(this);
-      formData.set("absent_days", $("#salaryAbsent").val());
-      formData.set("leave_days", $("#salaryLeaveDays").val());
       apiPost(API.salaryCalculations, formData).then(function() {
         loadSalaryCalculations();
         bootstrap.Modal.getInstance(document.getElementById("salaryModal")).hide();

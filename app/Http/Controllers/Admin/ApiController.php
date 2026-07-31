@@ -57,6 +57,7 @@ class ApiController extends Controller
                 'gender' => $e->gender,
                 'age' => $e->age,
                 'dob' => $e->dob?->format('Y-m-d'),
+                'join_date' => $e->join_date?->format('Y-m-d'),
                 'salary' => $e->salary,
                 'blood_group' => $e->blood_group ?? '',
                 'paid_leaves' => $e->paid_leaves ?? 1,
@@ -80,6 +81,7 @@ class ApiController extends Controller
             'gender' => 'nullable|string',
             'age' => 'nullable|integer',
             'dob' => 'nullable|date',
+            'join_date' => 'nullable|date',
             'salary' => 'nullable|numeric|min:0',
             'paid_leaves' => 'nullable|integer|min:0',
             'blood_group' => 'nullable|string|max:10',
@@ -112,6 +114,7 @@ class ApiController extends Controller
             'gender' => $data['gender'] ?? null,
             'age' => $data['age'] ?? null,
             'dob' => $data['dob'] ?? null,
+            'join_date' => $data['join_date'] ?? null,
             'photo' => $photoName,
             'status' => 'Active',
             'salary' => $data['salary'] ?? null,
@@ -137,11 +140,11 @@ class ApiController extends Controller
             'gender' => 'nullable|string',
             'age' => 'nullable|integer',
             'dob' => 'nullable|date',
+            'join_date' => 'nullable|date',
             'salary' => 'nullable|numeric|min:0',
             'paid_leaves' => 'nullable|integer|min:0',
             'blood_group' => 'nullable|string|max:10',
         ]);
-
         $branchId = $employee->branch_id;
         if (!empty($data['branch'])) {
             $branch = Branch::firstOrCreate(['name' => $data['branch']]);
@@ -168,6 +171,7 @@ class ApiController extends Controller
             'gender' => $data['gender'] ?? $employee->gender,
             'age' => $data['age'] ?? $employee->age,
             'dob' => $data['dob'] ?? $employee->dob,
+            'join_date' => $data['join_date'] ?? $employee->join_date,
             'photo' => $photoName,
             'salary' => $data['salary'] ?? $employee->salary,
             'paid_leaves' => $data['paid_leaves'] ?? $employee->paid_leaves,
@@ -301,9 +305,13 @@ class ApiController extends Controller
     public function leaveRequests(): JsonResponse
     {
         $leaves = LeaveRequest::with('user')->latest()->get()->map(function ($l) {
+            $name = $l->user?->name;
+            if (!$name && $l->employee_id) {
+                $name = Employee::where('employee_id', $l->employee_id)->value('name');
+            }
             return [
                 'id' => $l->id,
-                'name' => $l->user->name,
+                'name' => $name ?? 'Unknown',
                 'type' => $l->type,
                 'from' => $l->from_date->format('Y-m-d'),
                 'to' => $l->to_date->format('Y-m-d'),
@@ -326,7 +334,12 @@ class ApiController extends Controller
         $leave->update(['status' => $request->action]);
 
         if ($request->action === 'Approved') {
-            $employee = Employee::where('email', $leave->user->email)->first();
+            $employee = $leave->employee_id
+                ? Employee::where('employee_id', $leave->employee_id)->first()
+                : null;
+            if (!$employee && $leave->user) {
+                $employee = Employee::where('email', $leave->user->email)->first();
+            }
             if ($employee) {
                 $start = Carbon::parse($leave->from_date);
                 $end = Carbon::parse($leave->to_date);
@@ -390,6 +403,59 @@ class ApiController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function sendNotification(Request $request): JsonResponse
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'body' => 'required|string|max:1000',
+            'target' => 'required|string|max:20',
+        ]);
+
+        $title = $request->title;
+        $body = $request->body;
+
+        if ($request->target === 'all') {
+            $employees = Employee::all();
+            foreach ($employees as $employee) {
+                $user = User::where('email', $employee->email)->first();
+                Notification::create([
+                    'user_id' => $user?->id,
+                    'employee_id' => $employee->employee_id,
+                    'title' => $title,
+                    'body' => $body,
+                    'type' => 'bi-megaphone-fill',
+                    'is_read' => false,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification sent to all employees (' . $employees->count() . ').',
+                'count' => $employees->count(),
+            ]);
+        }
+
+        $employee = Employee::where('employee_id', $request->target)->first();
+        if (!$employee) {
+            return response()->json(['success' => false, 'message' => 'Employee not found.'], 404);
+        }
+
+        $user = User::where('email', $employee->email)->first();
+        Notification::create([
+            'user_id' => $user?->id,
+            'employee_id' => $employee->employee_id,
+            'title' => $title,
+            'body' => $body,
+            'type' => 'bi-megaphone-fill',
+            'is_read' => false,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification sent to ' . $employee->name . '.',
+        ]);
+    }
+
     public function salaryCalculations(): JsonResponse
     {
         $records = SalaryCalculation::with('employee')->latest()->get()->map(function ($s) {
@@ -414,6 +480,78 @@ class ApiController extends Controller
         return response()->json($records);
     }
 
+    public function salaryPreview(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'employee_id' => 'required|string|exists:employees,employee_id',
+            'month' => 'required|string|max:7',
+        ]);
+
+        $employee = Employee::where('employee_id', $data['employee_id'])->firstOrFail();
+        $baseSalary = $employee->salary ?? 0;
+
+        [$year, $monthNum] = explode('-', $data['month']);
+        $monthStart = Carbon::create((int)$year, (int)$monthNum, 1)->startOfMonth();
+        $monthEnd = $monthStart->copy()->endOfMonth();
+
+        $attendances = Attendance::where(function ($q) use ($employee) {
+                $q->where('user_id', $employee->id)->orWhere('employee_id', $employee->employee_id);
+            })
+            ->whereBetween('date', [$monthStart, $monthEnd])
+            ->get();
+
+        $presentDays = $attendances->where('status', 'present')->count();
+        $halfDays = $attendances->where('status', 'half-day')->count();
+        $absentDays = $attendances->where('status', 'absent')->count();
+
+        $approvedLeaves = LeaveRequest::where(function ($q) use ($employee) {
+                $q->where('user_id', $employee->id)->orWhere('employee_id', $employee->employee_id);
+            })
+            ->where('status', 'Approved')
+            ->whereBetween('from_date', [$monthStart, $monthEnd])
+            ->get();
+
+        $leaveDays = 0;
+        foreach ($approvedLeaves as $leave) {
+            $from = $leave->from_date instanceof Carbon ? $leave->from_date : Carbon::parse($leave->from_date);
+            $to = $leave->to_date instanceof Carbon ? $leave->to_date : Carbon::parse($leave->to_date);
+            if ($from->lte($monthEnd) && $to->gte($monthStart)) {
+                $clampedFrom = $from->lt($monthStart) ? $monthStart->copy() : $from;
+                $clampedTo = $to->gt($monthEnd) ? $monthEnd->copy() : $to;
+                $leaveDays += $clampedFrom->diffInDays($clampedTo) + 1;
+            }
+        }
+
+        $paidLeavesUsed = $employee->paid_leaves ?? 1;
+
+        $joinDate = $employee->join_date ? Carbon::parse($employee->join_date) : null;
+        if ($joinDate && $joinDate->gt($monthStart)) {
+            $eligibleDays = min(30, (int)$joinDate->copy()->startOfDay()->diffInDays($monthEnd->copy()->startOfDay()) + 1);
+        } else {
+            $eligibleDays = 30;
+        }
+
+        $workedDays = $presentDays + ($halfDays * 0.5) + $leaveDays;
+        $workedDays = min($workedDays, $eligibleDays);
+        $deductibleDays = max(0, $eligibleDays - $workedDays);
+        $perDay = $baseSalary / 30;
+        $finalSalary = max(0, round($perDay * $workedDays, 2));
+
+        return response()->json([
+            'success' => true,
+            'base_salary' => $baseSalary,
+            'present_days' => $presentDays,
+            'half_days' => $halfDays,
+            'absent_days' => $absentDays,
+            'leave_days' => $leaveDays,
+            'paid_leaves_used' => $paidLeavesUsed,
+            'eligible_days' => $eligibleDays,
+            'worked_days' => $workedDays,
+            'deductible_days' => $deductibleDays,
+            'final_salary' => $finalSalary,
+        ]);
+    }
+
     public function storeSalaryCalculation(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -435,12 +573,15 @@ class ApiController extends Controller
         $monthStart = Carbon::create((int)$year, (int)$monthNum, 1)->startOfMonth();
         $monthEnd = $monthStart->copy()->endOfMonth();
 
-        $absentDays = $data['absent_days'] ?? Attendance::where(function ($q) use ($employee) {
+        $attendances = Attendance::where(function ($q) use ($employee) {
                 $q->where('user_id', $employee->id)->orWhere('employee_id', $employee->employee_id);
             })
             ->whereBetween('date', [$monthStart, $monthEnd])
-            ->where('status', 'absent')
-            ->count();
+            ->get();
+
+        $presentDays = $attendances->where('status', 'present')->count();
+        $halfDays = $attendances->where('status', 'half-day')->count();
+        $absentDays = $data['absent_days'] ?? $attendances->where('status', 'absent')->count();
 
         $approvedLeaves = LeaveRequest::where(function ($q) use ($employee) {
                 $q->where('user_id', $employee->id)->orWhere('employee_id', $employee->employee_id);
@@ -453,14 +594,27 @@ class ApiController extends Controller
         foreach ($approvedLeaves as $leave) {
             $from = $leave->from_date instanceof Carbon ? $leave->from_date : Carbon::parse($leave->from_date);
             $to = $leave->to_date instanceof Carbon ? $leave->to_date : Carbon::parse($leave->to_date);
-            $days = $from->diffInDays($to) + 1;
-            $leaveDays += $days;
+            if ($from->lte($monthEnd) && $to->gte($monthStart)) {
+                $clampedFrom = $from->lt($monthStart) ? $monthStart->copy() : $from;
+                $clampedTo = $to->gt($monthEnd) ? $monthEnd->copy() : $to;
+                $leaveDays += $clampedFrom->diffInDays($clampedTo) + 1;
+            }
         }
 
         $paidLeavesUsed = $employee->paid_leaves ?? 1;
-        $deductibleDays = max(0, $absentDays + $leaveDays - $paidLeavesUsed);
+
+        $joinDate = $employee->join_date ? Carbon::parse($employee->join_date) : null;
+        if ($joinDate && $joinDate->gt($monthStart)) {
+            $eligibleDays = min(30, (int)$joinDate->copy()->startOfDay()->diffInDays($monthEnd->copy()->startOfDay()) + 1);
+        } else {
+            $eligibleDays = 30;
+        }
+
+        $workedDays = $presentDays + ($halfDays * 0.5) + $leaveDays;
+        $workedDays = min($workedDays, $eligibleDays);
+        $deductibleDays = max(0, $eligibleDays - $workedDays);
         $perDay = $baseSalary / 30;
-        $finalSalary = max(0, $baseSalary - ($perDay * $deductibleDays));
+        $finalSalary = max(0, round($perDay * $workedDays, 2));
 
         $record = SalaryCalculation::updateOrCreate(
             ['employee_id' => $employee->id, 'month' => $data['month']],
@@ -471,7 +625,7 @@ class ApiController extends Controller
                 'leave_days' => $leaveDays,
                 'paid_leaves_used' => $paidLeavesUsed,
                 'deductible_days' => $deductibleDays,
-                'final_salary' => round($finalSalary, 2),
+                'final_salary' => $finalSalary,
             ]
         );
 
