@@ -163,7 +163,7 @@
       </div>
 
       <div class="portal-grid">
-        <div class="portal-card" onclick="window.location.href='{{ route("employee.login") }}'">
+        <div class="portal-card" data-href="{{ route('employee.login') }}">
           <div class="icon" style="background:rgba(15,181,163,.18);color:#0fb5a3;">
             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </div>
@@ -172,7 +172,7 @@
           <a href="{{ route('employee.login') }}" class="btn btn-employee">Employee Login</a>
         </div>
 
-        <div class="portal-card" onclick="window.location.href='{{ route('login') }}?admin=1'">
+        <div class="portal-card" data-href="{{ route('login') }}?admin=1">
           <div class="icon" style="background:rgba(79,91,213,.18);color:#4f5bd5;">
             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
@@ -234,6 +234,12 @@
     }
     updateClock();
     setInterval(updateClock, 1000);
+
+    document.querySelectorAll('.portal-card').forEach(function (card) {
+      card.addEventListener('click', function () {
+        window.location.href = card.dataset.href;
+      });
+    });
   </script>
 </body>
 </html>
