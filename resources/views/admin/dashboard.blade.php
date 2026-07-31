@@ -1198,8 +1198,14 @@
                 <label class="form-label small">Blood Group</label>
                 <select class="form-select form-select-sm" name="blood_group">
                   <option value="">Select</option>
-                  <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
-                  <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+                  <option>A+</option>
+                  <option>A-</option>
+                  <option>B+</option>
+                  <option>B-</option>
+                  <option>AB+</option>
+                  <option>AB-</option>
+                  <option>O+</option>
+                  <option>O-</option>
                 </select>
               </div>
             </div>
@@ -1327,6 +1333,48 @@
     </div>
   </div>
 
+  <!-- ============ Attendance edit modal (admin only) ============ -->
+  <div class="modal fade" id="attendanceEditModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title">Edit Attendance</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="attendanceEditForm">
+          <input type="hidden" id="attEmpId">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Employee</label>
+              <input type="text" id="attEmpName" class="form-control form-control-sm" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Date</label>
+              <input type="date" id="attDateEdit" class="form-control form-control-sm" required>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small fw-semibold">Check-in <span class="text-muted fw-normal">(shift 09:30)</span></label>
+                <input type="time" id="attCheckIn" class="form-control form-control-sm" value="09:30">
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-semibold">Check-out <span class="text-muted fw-normal">(shift 18:30)</span></label>
+                <input type="time" id="attCheckOut" class="form-control form-control-sm" value="">
+              </div>
+            </div>
+            <p class="small text-muted mb-0"><i class="bi bi-info-circle"></i> Use this when server/network was down and time was noted manually. Check-in and check-out update <strong>independently</strong> — if the employee hasn't clocked out yet, only update check-in.</p>
+            <div id="attEditMsg" class="small mt-2 mb-0"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-ghost btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-accent btn-sm" id="saveCheckInBtn"><i class="bi bi-box-arrow-in-right"></i> Update Check-in</button>
+            <button type="submit" class="btn btn-sm text-white" id="saveCheckOutBtn" style="background:var(--teal);"><i class="bi bi-box-arrow-right"></i> Update Check-out</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -1345,6 +1393,7 @@
       employees: "{{ route('admin.api.employees') }}",
       branches: "{{ route('admin.api.branches') }}",
       attendance: "{{ route('admin.api.attendance') }}",
+      attendanceUpdate: "{{ route('admin.api.attendance.update') }}",
       leaveRequests: "{{ route('admin.api.leave-requests') }}",
       leaveAction: "{{ route('admin.api.leave-action') }}",
       designations: "{{ route('admin.api.designations') }}",
@@ -1357,17 +1406,30 @@
       employeeStatus: "{{ route('admin.api.employees.status') }}",
     };
 
-    $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+    $.ajaxSetup({
+      headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+      }
+    });
 
     /* ---------------- Generic AJAX wrapper ---------------- */
     function apiGet(url) {
-      return $.ajax({ url: url, method: "GET", dataType: "json" }).fail(function(xhr) {
+      return $.ajax({
+        url: url,
+        method: "GET",
+        dataType: "json"
+      }).fail(function(xhr) {
         console.error("GET " + url + " failed", xhr.responseJSON || xhr.statusText);
       });
     }
 
     function apiPost(url, payload) {
-      return $.ajax({ url: url, method: "POST", data: payload, dataType: "json" }).fail(function(xhr) {
+      return $.ajax({
+        url: url,
+        method: "POST",
+        data: payload,
+        dataType: "json"
+      }).fail(function(xhr) {
         console.error("POST " + url + " failed", xhr.responseJSON || xhr.statusText);
       });
     }
@@ -1406,7 +1468,10 @@
       if (viewName === "attendance") loadAttendance();
       if (viewName === "leave") loadLeave();
       if (viewName === "designation") loadDesignations();
-      if (viewName === "notifications") { loadNotifications(); loadNotifTargets(); }
+      if (viewName === "notifications") {
+        loadNotifications();
+        loadNotifTargets();
+      }
       if (viewName === "salary") loadSalaryCalculations();
       if (viewName === "holidays") loadHolidays();
     }
@@ -1486,7 +1551,9 @@
 
     function fmtSalary(val) {
       if (val === null || val === undefined || val === "") return "--";
-      return "₹" + parseFloat(val).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+      return "₹" + parseFloat(val).toLocaleString("en-IN", {
+        minimumFractionDigits: 2
+      });
     }
 
     function renderEmployees(rows) {
@@ -1631,7 +1698,9 @@
           data: formData,
           processData: false,
           contentType: false,
-          headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
+          headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+          }
         }).then(function() {
           const empId = data.employee_id;
           if (editingEmployeeId) {
@@ -1670,7 +1739,8 @@
     }
 
     function populateFilterDropdowns() {
-      const branchSet = {}, desigSet = {};
+      const branchSet = {},
+        desigSet = {};
       employeesCache.forEach(function(e) {
         if (e.branch) branchSet[e.branch] = true;
         if (e.designation) desigSet[e.designation] = true;
@@ -1781,7 +1851,7 @@
        ATTENDANCE
        ========================================================================= */
     const ATT_HEADERS = {
-      daily: ["Date", "Employee", "Designation", "Check-in", "Check-out", "Hours", "Status", "Location"],
+      daily: ["Date", "Employee", "Designation", "Check-in", "Check-out", "Hours", "Status", "Location", "Action"],
       weekly: ["Employee", "Designation", "Present Days", "Absent Days", "Leave Days", "Late Count", "Total Hours"],
       monthly: ["Employee", "Designation", "Present Days", "Absent Days", "Leave Days", "Late Count", "Total Hours"],
       yearly: ["Employee", "Designation", "Present Days", "Absent Days", "Leave Days", "Late Count", "Total Hours"]
@@ -1796,14 +1866,15 @@
       }).join("") + "</tr>");
       $("#attendanceBody").html(skeletonRows(5, ATT_HEADERS[currentAttPeriod].length));
 
-      apiGet(API.attendance + "?period=" + currentAttPeriod).then(function(rows) {
+      apiGet(API.attendance + "?period=" + currentAttPeriod + (currentAttPeriod === "daily" ? "&date=" + ($("#attDate").val() || "") : "")).then(function(rows) {
         if (currentAttPeriod === "daily") {
           $("#attendanceBody").html(rows.map(function(a) {
             const loc = a.location_name || (a.latitude && a.longitude ? a.latitude + ", " + a.longitude : "--");
             return "<tr><td class='mono small'>" + a.date + "</td><td class='fw-semibold'>" + a.name + "</td><td>" + a.designation + "</td>" +
               "<td class='mono small'>" + a.in + "</td><td class='mono small'>" + a.out + "</td>" +
               "<td class='mono small'>" + a.hours + "</td><td>" + attendancePill(a.status) + "</td>" +
-              "<td class='small text-muted' title='" + (a.latitude ? a.latitude + ", " + a.longitude : "") + "'>" + loc + "</td></tr>";
+              "<td class='small text-muted' title='" + (a.latitude ? a.latitude + ", " + a.longitude : "") + "'>" + loc + "</td>" +
+              "<td><span class='action-ic' title='Edit check-in / check-out' onclick='openAttendanceEdit(\"" + a.employee_id + "\", \"" + a.name + "\", \"" + a.date + "\", \"" + (a.inRaw || "") + "\", \"" + (a.outRaw || "") + "\")'><i class='bi bi-pencil-fill'></i></span></td></tr>";
           }).join(""));
         } else {
           $("#attendanceBody").html(rows.map(function(a) {
@@ -1824,9 +1895,64 @@
       loadAttendance($(this).data("period"));
     });
 
+    /* ---------------- Manual attendance edit (admin) ---------------- */
+    function openAttendanceEdit(employeeId, name, date, inRaw, outRaw) {
+      $("#attEmpId").val(employeeId);
+      $("#attEmpName").val(name);
+      $("#attDateEdit").val(date);
+      $("#attCheckIn").val(inRaw || "09:30");
+      $("#attCheckOut").val(outRaw || "");
+      $("#attEditMsg").removeClass("text-danger text-success").text(outRaw ? "" : "No check-out yet — update only the check-in.");
+      new bootstrap.Modal(document.getElementById("attendanceEditModal")).show();
+    }
+
+    let attEditField = "check_in";
+    $("#saveCheckInBtn").on("click", function() {
+      attEditField = "check_in";
+    });
+    $("#saveCheckOutBtn").on("click", function() {
+      attEditField = "check_out";
+    });
+
+    $("#attendanceEditForm").on("submit", function(e) {
+      e.preventDefault();
+      const $msg = $("#attEditMsg");
+      $msg.removeClass("text-danger text-success").text("");
+
+      const field = attEditField;
+      const time = field === "check_in" ? $("#attCheckIn").val() : $("#attCheckOut").val();
+      if (!time) {
+        $msg.addClass("text-danger").text(field === "check_in" ? "Enter a check-in time." : "Enter a check-out time.");
+        return;
+      }
+
+      const btn = field === "check_in" ? $("#saveCheckInBtn") : $("#saveCheckOutBtn");
+      btn.prop("disabled", true);
+
+      apiPost(API.attendanceUpdate, {
+        employee_id: $("#attEmpId").val(),
+        date: $("#attDateEdit").val(),
+        field: field,
+        time: time
+      }).done(function(resp) {
+        $msg.addClass("text-success").text(resp.message || (field === "check_in" ? "Check-in updated." : "Check-out updated."));
+        setTimeout(function() {
+          bootstrap.Modal.getInstance(document.getElementById("attendanceEditModal")).hide();
+          loadAttendance("daily");
+        }, 900);
+      }).fail(function(xhr) {
+        const m = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "Failed to update attendance.";
+        $msg.addClass("text-danger").text(m);
+      }).always(function() {
+        btn.prop("disabled", false);
+      });
+    });
+
     function getAttendanceTableData() {
       const period = currentAttPeriod || "daily";
-      const headers = ATT_HEADERS[period];
+      const headers = ATT_HEADERS[period].filter(function(h) {
+        return h !== "Action";
+      });
       const rows = [];
       $("#attendanceBody tr").each(function() {
         if ($(this).hasClass("skeleton-row")) return;
@@ -1834,9 +1960,14 @@
         $(this).find("td").each(function() {
           row.push($(this).text().trim());
         });
+        while (row.length && row[row.length - 1] === "") row.pop();
         if (row.length) rows.push(row);
       });
-      return { period: period, headers: headers, rows: rows };
+      return {
+        period: period,
+        headers: headers,
+        rows: rows
+      };
     }
 
     function exportAttendancePDF() {
@@ -1862,9 +1993,19 @@
       var opt = {
         margin: [10, 10, 10, 10],
         filename: title + ".pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "mm", format: "a4", orientation: "landscape" }
+        image: {
+          type: "jpeg",
+          quality: 0.98
+        },
+        html2canvas: {
+          scale: 2,
+          useCORS: true
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "landscape"
+        }
       };
       html2pdf().set(opt).from(html).save();
     }
@@ -2016,9 +2157,9 @@
     }
 
     function renderNotifTargets() {
-      const allLabel = notifEmployeeOptions.length
-        ? "All Employees (" + notifEmployeeOptions.length + ")"
-        : "All Employees";
+      const allLabel = notifEmployeeOptions.length ?
+        "All Employees (" + notifEmployeeOptions.length + ")" :
+        "All Employees";
       const options = notifEmployeeOptions.map(function(e) {
         return "<option value='" + e.id + "'>" + e.name + " (" + e.id + ")</option>";
       }).join("");
@@ -2115,7 +2256,9 @@
     function recalcSalary(preview) {
       const base = parseFloat($("#salaryBase").val()) || 0;
       if (!preview) {
-        $("#salaryFinalDisplay").val(base ? "₹" + base.toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "₹0.00");
+        $("#salaryFinalDisplay").val(base ? "₹" + base.toLocaleString("en-IN", {
+          minimumFractionDigits: 2
+        }) : "₹0.00");
         return;
       }
       const p = preview;
@@ -2127,7 +2270,9 @@
       $("#salaryEligible").val(p.eligible_days);
       $("#salaryDeductible").val(p.deductible_days);
       $("#salaryWorked").val(p.worked_days);
-      $("#salaryFinalDisplay").val(p.final_salary ? "₹" + Number(p.final_salary).toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "₹0.00");
+      $("#salaryFinalDisplay").val(p.final_salary ? "₹" + Number(p.final_salary).toLocaleString("en-IN", {
+        minimumFractionDigits: 2
+      }) : "₹0.00");
     }
 
     $("#salaryEmployeeSelect").on("change", function() {
@@ -2189,7 +2334,9 @@
 
     function deleteHoliday(id) {
       if (!confirm("Remove this holiday?")) return;
-      apiPost(API.holidays + "/delete", { id: id }).then(function() {
+      apiPost(API.holidays + "/delete", {
+        id: id
+      }).then(function() {
         loadHolidays();
       });
     }
@@ -2241,7 +2388,10 @@
     }
 
     function toggleEmployeeStatus(employeeId, newStatus) {
-      apiPost(API.employeeStatus, { employee_id: employeeId, status: newStatus }).then(function(resp) {
+      apiPost(API.employeeStatus, {
+        employee_id: employeeId,
+        status: newStatus
+      }).then(function(resp) {
         employeesCache = employeesCache.map(function(e) {
           if (e.id === employeeId) e.status = resp.status;
           return e;
@@ -2283,8 +2433,10 @@
       new bootstrap.Modal(document.getElementById("logoutModal")).show();
     });
     $("#confirmLogout").on("click", function() {
-      $.post("{{ route('logout') }}", { _token: '{{ csrf_token() }}' }).then(function() {
-        window.location.href = "/login";
+      $.post("{{ route('logout') }}", {
+        _token: '{{ csrf_token() }}'
+      }).then(function() {
+        window.location.href = "/";
       });
     });
 

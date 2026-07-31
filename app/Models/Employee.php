@@ -11,6 +11,7 @@ class Employee extends Model
     protected $fillable = [
         'employee_id', 'name', 'email', 'designation', 'branch_id',
         'shift_start', 'shift_end', 'gender', 'age', 'dob', 'join_date', 'photo', 'status', 'salary', 'paid_leaves', 'blood_group',
+        'mobile', 'emergency_contact', 'state', 'city',
     ];
 
     protected function casts(): array

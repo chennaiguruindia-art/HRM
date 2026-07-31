@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,8 +10,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #0f1225 0%, #1a2340 50%, #0f1225 100%);
@@ -21,27 +31,49 @@
       min-height: 100vh;
       padding: 20px;
     }
+
     .card {
-      background: rgba(255,255,255,.06);
+      background: rgba(255, 255, 255, .06);
       backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,.1);
+      border: 1px solid rgba(255, 255, 255, .1);
       border-radius: 20px;
       padding: 36px 32px;
       width: 100%;
       max-width: 440px;
       text-align: center;
     }
+
     .brand {
       font-family: 'Sora', sans-serif;
       font-size: 1.3rem;
       font-weight: 700;
       margin-bottom: 4px;
     }
-    .brand-logo { height: 44px; width: auto; max-width: 100%; object-fit: contain; margin-bottom: 10px; }
-    .brand span { color: #0fb5a3; }
-    .brand small { color: #6f7794; font-weight: 500; font-size: .75rem; display: block; margin-top: 2px; }
 
-    .clock-wrap { margin: 20px 0 24px; }
+    .brand-logo {
+      height: 44px;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    .brand span {
+      color: #0fb5a3;
+    }
+
+    .brand small {
+      color: #6f7794;
+      font-weight: 500;
+      font-size: .75rem;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .clock-wrap {
+      margin: 20px 0 24px;
+    }
+
     .clock-time {
       font-family: 'JetBrains Mono', monospace;
       font-size: 2.6rem;
@@ -49,26 +81,39 @@
       letter-spacing: 3px;
       color: #0fb5a3;
     }
-    .clock-date { font-size: .82rem; color: #6f7794; margin-top: 4px; }
+
+    .clock-date {
+      font-size: .82rem;
+      color: #6f7794;
+      margin-top: 4px;
+    }
 
     .input-group {
       display: flex;
       gap: 8px;
       margin-bottom: 20px;
     }
+
     .input-group input {
       flex: 1;
       padding: 10px 14px;
       border-radius: 10px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(255, 255, 255, .06);
       color: #fff;
       font-size: .9rem;
       outline: none;
       font-family: 'JetBrains Mono', monospace;
     }
-    .input-group input::placeholder { color: #6f7794; }
-    .input-group input:focus { border-color: #0fb5a3; }
+
+    .input-group input::placeholder {
+      color: #6f7794;
+    }
+
+    .input-group input:focus {
+      border-color: #0fb5a3;
+    }
+
     .input-group button {
       padding: 10px 18px;
       border-radius: 10px;
@@ -80,28 +125,80 @@
       cursor: pointer;
       white-space: nowrap;
     }
-    .input-group button:hover { background: #0d9e8e; }
-    .input-group button:disabled { opacity: .5; cursor: not-allowed; }
+
+    .input-group button:hover {
+      background: #0d9e8e;
+    }
+
+    .input-group button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
 
     .emp-info {
       display: none;
-      background: rgba(255,255,255,.05);
+      background: rgba(255, 255, 255, .05);
       border-radius: 14px;
       padding: 18px;
       margin-bottom: 20px;
       text-align: left;
     }
-    .emp-info.show { display: block; }
-    .emp-info .top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .emp-info .top img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
-    .emp-info .top .name { font-weight: 600; font-size: .95rem; }
-    .emp-info .top .role { font-size: .78rem; color: #9499b5; }
-    .emp-info .detail { display: flex; gap: 12px; font-size: .8rem; color: #9499b5; }
-    .emp-info .detail span { flex: 1; }
-    .emp-info .detail strong { color: #fff; display: block; font-size: .82rem; margin-top: 2px; }
 
-    .btn-group { display: none; gap: 12px; }
-    .btn-group.show { display: flex; }
+    .emp-info.show {
+      display: block;
+    }
+
+    .emp-info .top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .emp-info .top img {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .emp-info .top .name {
+      font-weight: 600;
+      font-size: .95rem;
+    }
+
+    .emp-info .top .role {
+      font-size: .78rem;
+      color: #9499b5;
+    }
+
+    .emp-info .detail {
+      display: flex;
+      gap: 12px;
+      font-size: .8rem;
+      color: #9499b5;
+    }
+
+    .emp-info .detail span {
+      flex: 1;
+    }
+
+    .emp-info .detail strong {
+      color: #fff;
+      display: block;
+      font-size: .82rem;
+      margin-top: 2px;
+    }
+
+    .btn-group {
+      display: none;
+      gap: 12px;
+    }
+
+    .btn-group.show {
+      display: flex;
+    }
+
     .btn-group .btn {
       flex: 1;
       padding: 14px;
@@ -112,11 +209,29 @@
       cursor: pointer;
       transition: background .2s, opacity .2s;
     }
-    .btn-group .btn:disabled { opacity: .35; cursor: not-allowed; }
-    .btn-clock-in { background: #0fb5a3; color: #fff; }
-    .btn-clock-in:hover:not(:disabled) { background: #0d9e8e; }
-    .btn-clock-out { background: #ef5d6f; color: #fff; }
-    .btn-clock-out:hover:not(:disabled) { background: #d94a5c; }
+
+    .btn-group .btn:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+    }
+
+    .btn-clock-in {
+      background: #0fb5a3;
+      color: #fff;
+    }
+
+    .btn-clock-in:hover:not(:disabled) {
+      background: #0d9e8e;
+    }
+
+    .btn-clock-out {
+      background: #ef5d6f;
+      color: #fff;
+    }
+
+    .btn-clock-out:hover:not(:disabled) {
+      background: #d94a5c;
+    }
 
     .msg {
       margin-top: 16px;
@@ -125,9 +240,24 @@
       border-radius: 10px;
       display: none;
     }
-    .msg.success { display: block; background: rgba(15,181,163,.15); color: #0fb5a3; }
-    .msg.error { display: block; background: rgba(239,93,111,.15); color: #ef5d6f; }
-    .msg.info { display: block; background: rgba(79,91,213,.15); color: #7b85d8; }
+
+    .msg.success {
+      display: block;
+      background: rgba(15, 181, 163, .15);
+      color: #0fb5a3;
+    }
+
+    .msg.error {
+      display: block;
+      background: rgba(239, 93, 111, .15);
+      color: #ef5d6f;
+    }
+
+    .msg.info {
+      display: block;
+      background: rgba(79, 91, 213, .15);
+      color: #7b85d8;
+    }
 
     .back-link {
       display: inline-block;
@@ -138,21 +268,43 @@
       pointer-events: none;
       opacity: .55;
     }
-    .back-link:hover { color: #fff; }
+
+    .back-link:hover {
+      color: #fff;
+    }
+
     .back-link.enabled {
       pointer-events: auto;
       opacity: 1;
-      background: rgba(15,181,163,.15);
+      background: rgba(15, 181, 163, .15);
       color: #0fb5a3;
-      border: 1px solid rgba(15,181,163,.4);
+      border: 1px solid rgba(15, 181, 163, .4);
       padding: 9px 20px;
       border-radius: 30px;
       font-weight: 600;
     }
-    .back-link.enabled:hover { background: rgba(15,181,163,.28); color: #0fb5a3; }
 
-    .spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; margin: 0 auto; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .back-link.enabled:hover {
+      background: rgba(15, 181, 163, .28);
+      color: #0fb5a3;
+    }
+
+    .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, .2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
     .hours-badge {
       font-size: .78rem;
@@ -160,9 +312,13 @@
       margin-top: 10px;
       display: none;
     }
-    .hours-badge.show { display: block; }
+
+    .hours-badge.show {
+      display: block;
+    }
   </style>
 </head>
+
 <body>
   <div class="card">
     <img src="{{ asset('logo/guru.png') }}" class="brand-logo" alt="Guru Group">
@@ -202,12 +358,16 @@
 
     <div class="msg" id="msg"></div>
 
-    <a href="/" class="back-link" id="dashLink">&larr; Back to Home</a>
+    <a href="/" class="back-link" id="dashLink"> Employee dashboard &rarr;</a>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script>
-    $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+    $.ajaxSetup({
+      headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+      }
+    });
 
     let currentEmployeeId = null;
     let currentLat = null;
@@ -232,7 +392,10 @@
         currentLat = null;
         currentLng = null;
         currentLocationName = null;
-      }, { timeout: 5000, enableHighAccuracy: true });
+      }, {
+        timeout: 5000,
+        enableHighAccuracy: true
+      });
     }
     getLocation();
 
@@ -242,24 +405,31 @@
       const m = String(now.getMinutes()).padStart(2, '0');
       const s = String(now.getSeconds()).padStart(2, '0');
       document.getElementById('liveTime').textContent = h + ':' + m + ':' + s;
-      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
       document.getElementById('liveDate').textContent = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
     }
     updateClock();
     setInterval(updateClock, 1000);
 
-    $('#empIdInput').on('keydown', function(e) { if (e.key === 'Enter') lookupEmployee(); });
+    $('#empIdInput').on('keydown', function(e) {
+      if (e.key === 'Enter') lookupEmployee();
+    });
 
     function showMsg(text, type) {
       const el = $('#msg');
       el.removeClass('success error info').addClass(type).text(text).show();
-      if (type !== 'error') setTimeout(function() { el.fadeOut(); }, 4000);
+      if (type !== 'error') setTimeout(function() {
+        el.fadeOut();
+      }, 4000);
     }
 
     function lookupEmployee() {
       const id = $('#empIdInput').val().trim();
-      if (!id) { showMsg('Please enter an Employee ID.', 'error'); return; }
+      if (!id) {
+        showMsg('Please enter an Employee ID.', 'error');
+        return;
+      }
 
       $('#lookupBtn').prop('disabled', true);
       $('#spinner').show();
@@ -271,7 +441,9 @@
       $.ajax({
         url: '{{ route("employee.lookup") }}',
         method: 'POST',
-        data: { employee_id: id }
+        data: {
+          employee_id: id
+        }
       }).done(function(resp) {
         currentEmployeeId = resp.employee.id;
         $('#empImg').attr('src', resp.employee.img);
@@ -312,7 +484,9 @@
       $('#clockOutBtn').prop('disabled', true);
       $('#msg').hide().removeClass('success error info');
 
-      const data = { employee_id: currentEmployeeId };
+      const data = {
+        employee_id: currentEmployeeId
+      };
       if (currentLat && currentLng) {
         data.latitude = currentLat;
         data.longitude = currentLng;
@@ -340,7 +514,9 @@
       $('#clockOutBtn').prop('disabled', true);
       $('#msg').hide().removeClass('success error info');
 
-      const data = { employee_id: currentEmployeeId };
+      const data = {
+        employee_id: currentEmployeeId
+      };
       if (currentLat && currentLng) {
         data.latitude = currentLat;
         data.longitude = currentLng;
@@ -365,4 +541,5 @@
     }
   </script>
 </body>
+
 </html>

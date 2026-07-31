@@ -21,6 +21,10 @@ class EmployeeController extends Controller
 
     public function dashboard(string $employeeId)
     {
+        if (session('employee_id') !== $employeeId) {
+            return redirect()->route('employee.login');
+        }
+
         $employee = Employee::with('branch')->where('employee_id', $employeeId)->first();
 
         if (!$employee) {
@@ -183,6 +187,26 @@ class EmployeeController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $request->validate([
+            'employee_id' => 'required|string|exists:employees,employee_id',
+            'mobile' => 'nullable|string|max:20',
+            'emergency_contact' => 'nullable|string|max:20',
+            'state' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:100',
+            'blood_group' => 'nullable|string|max:10',
+        ]);
+
+        $employee = Employee::where('employee_id', $request->employee_id)->firstOrFail();
+        $employee->update($request->only(['mobile', 'emergency_contact', 'state', 'city', 'blood_group']));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully.',
+        ]);
+    }
+
     public function lookup(Request $request): JsonResponse
     {
         $request->validate(['employee_id' => 'required|string']);
@@ -201,6 +225,8 @@ class EmployeeController extends Controller
         $attendance = Attendance::where('employee_id', $employee->employee_id)
             ->whereDate('date', $today)
             ->first();
+
+        $request->session()->put('employee_id', $employee->employee_id);
 
         return response()->json([
             'found' => true,
@@ -321,5 +347,12 @@ class EmployeeController extends Controller
             'time' => $now->format('h:i:s A'),
             'hours_worked' => $hoursWorked,
         ]);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->session()->forget('employee_id');
+
+        return redirect('/');
     }
 }

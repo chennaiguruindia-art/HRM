@@ -18,6 +18,9 @@ use Illuminate\Http\Request;
 
 class ApiController extends Controller
 {
+    const SHIFT_START = '09:30';
+    const SHIFT_END = '18:30';
+
     public function dashboardStats(): JsonResponse
     {
         $total = Employee::count();
@@ -60,6 +63,10 @@ class ApiController extends Controller
                 'join_date' => $e->join_date?->format('Y-m-d'),
                 'salary' => $e->salary,
                 'blood_group' => $e->blood_group ?? '',
+                'mobile' => $e->mobile ?? '',
+                'emergency_contact' => $e->emergency_contact ?? '',
+                'state' => $e->state ?? '',
+                'city' => $e->city ?? '',
                 'paid_leaves' => $e->paid_leaves ?? 1,
                 'img' => $img,
             ];
@@ -244,6 +251,9 @@ class ApiController extends Controller
 
         if ($period === 'daily') {
             $today = Carbon::today();
+            if ($request->date) {
+                $today = Carbon::parse($request->date)->startOfDay();
+            }
             $isHoliday = Holiday::whereDate('date', $today)->exists();
             $records = Attendance::with('user')->whereDate('date', $today)->get();
             $result = $employees->map(function ($e) use ($records, $isHoliday, $today) {
@@ -252,10 +262,14 @@ class ApiController extends Controller
                 if ($isHoliday) $status = 'Holiday';
                 return [
                     'date' => $att ? $att->date->format('Y-m-d') : $today->format('Y-m-d'),
+                    'employee_id' => $e->employee_id,
+                    'att_id' => $att?->id,
                     'name' => $e->name,
                     'designation' => $e->designation,
                     'in' => $att?->check_in ? Carbon::parse($att->check_in)->format('h:i A') : '--',
                     'out' => $att?->check_out ? Carbon::parse($att->check_out)->format('h:i A') : '--',
+                    'inRaw' => $att?->check_in ? Carbon::parse($att->check_in)->format('H:i') : null,
+                    'outRaw' => $att?->check_out ? Carbon::parse($att->check_out)->format('H:i') : null,
                     'hours' => $att && $att->check_in && $att->check_out ? Carbon::parse($att->check_in)->diffInHours(Carbon::parse($att->check_out)) . 'h' : '--',
                     'status' => $status,
                     'latitude' => $att?->latitude,
@@ -300,6 +314,89 @@ class ApiController extends Controller
         }
 
         return response()->json($result);
+    }
+
+    public function updateAttendance(Request $request): JsonResponse
+    {
+        $request->validate([
+            'employee_id' => 'required|string|exists:employees,employee_id',
+            'date' => 'required|date',
+            'field' => 'required|in:check_in,check_out',
+            'time' => 'required|date_format:H:i',
+        ]);
+
+        $employee = Employee::where('employee_id', $request->employee_id)->firstOrFail();
+        $date = Carbon::parse($request->date)->toDateString();
+
+        $attendance = Attendance::where('employee_id', $employee->employee_id)
+            ->whereDate('date', $date)
+            ->first();
+
+        if ($request->field === 'check_in') {
+            $checkIn = Carbon::parse($date . ' ' . $request->time);
+            $checkOut = $attendance?->check_out ? Carbon::parse($attendance->check_out) : null;
+            if ($checkOut && $checkOut->lt($checkIn)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Check-in cannot be after check-out (' . $checkOut->format('h:i A') . ').',
+                ], 422);
+            }
+        } else {
+            if (!$attendance || !$attendance->check_in) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Set a check-in first before adding a check-out.',
+                ], 422);
+            }
+            $checkOut = Carbon::parse($date . ' ' . $request->time);
+            $checkIn = Carbon::parse($attendance->check_in);
+            if ($checkOut->lt($checkIn)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Check-out cannot be before check-in (' . $checkIn->format('h:i A') . ').',
+                ], 422);
+            }
+        }
+
+        $status = $this->attendanceStatus($checkIn, $checkOut);
+
+        $user = User::where('email', $employee->email)->first();
+
+        Attendance::updateOrCreate(
+            ['employee_id' => $employee->employee_id, 'date' => $date],
+            [
+                'user_id' => $user?->id,
+                'check_in' => $checkIn,
+                'check_out' => $checkOut,
+                'status' => $status,
+                'notes' => 'Manually updated by admin',
+            ]
+        );
+
+        $label = $request->field === 'check_in' ? 'Check-in' : 'Check-out';
+        $time = $request->field === 'check_in' ? $checkIn : $checkOut;
+
+        return response()->json([
+            'success' => true,
+            'message' => $label . ' updated for ' . $employee->name . ' on ' . $date
+                . ' (' . $time->format('h:i A') . ').',
+        ]);
+    }
+
+    private function attendanceStatus(Carbon $checkIn, ?Carbon $checkOut): string
+    {
+        if ($checkIn->format('H:i') >= '12:00') {
+            return 'half-day';
+        }
+        if ($checkOut) {
+            if ($checkOut->format('H:i') < '13:30') {
+                return 'absent';
+            }
+            if ($checkOut->format('H:i') < self::SHIFT_END) {
+                return 'half-day';
+            }
+        }
+        return 'present';
     }
 
     public function leaveRequests(): JsonResponse

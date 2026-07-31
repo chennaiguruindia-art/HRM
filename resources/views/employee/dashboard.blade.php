@@ -34,7 +34,10 @@
       --radius: 14px;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
@@ -42,11 +45,29 @@
       color: var(--text);
       font-size: 14.5px;
     }
-    h1, h2, h3, h4, h5, .brand, .stat-num { font-family: 'Sora', sans-serif; }
-    .mono { font-family: 'JetBrains Mono', monospace; }
-    a { text-decoration: none; }
 
-    .app-shell { display: flex; min-height: 100vh; }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    .brand,
+    .stat-num {
+      font-family: 'Sora', sans-serif;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+    }
 
     /* ---------- Sidebar ---------- */
     .sidebar {
@@ -72,9 +93,19 @@
       font-size: 1.15rem;
       border-bottom: 1px solid var(--line);
     }
-    .brand .brand-logo { height: 34px; width: auto; object-fit: contain; }
 
-    .side-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+    .brand .brand-logo {
+      height: 34px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .side-nav {
+      flex: 1;
+      padding: 16px 12px;
+      overflow-y: auto;
+    }
+
     .side-nav .nav-label {
       font-size: .68rem;
       letter-spacing: .12em;
@@ -82,6 +113,7 @@
       color: #8a91a8;
       padding: 14px 12px 6px;
     }
+
     .side-link {
       display: flex;
       align-items: center;
@@ -95,7 +127,13 @@
       position: relative;
       transition: background .15s ease, color .15s ease;
     }
-    .side-link i { font-size: 1.05rem; width: 20px; text-align: center; }
+
+    .side-link i {
+      font-size: 1.05rem;
+      width: 20px;
+      text-align: center;
+    }
+
     .side-link .badge-pill {
       margin-left: auto;
       font-size: .68rem;
@@ -105,8 +143,17 @@
       border-radius: 20px;
       padding: 1px 7px;
     }
-    .side-link:hover { background: #e9ebf5; color: var(--text); }
-    .side-link.active { background: var(--accent-soft); color: var(--accent); }
+
+    .side-link:hover {
+      background: #e9ebf5;
+      color: var(--text);
+    }
+
+    .side-link.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
     .side-link.active::before {
       content: "";
       position: absolute;
@@ -125,12 +172,36 @@
       align-items: center;
       gap: 10px;
     }
-    .side-foot img { height: 28px; width: auto; object-fit: contain; }
-    .side-foot .name { color: var(--text); font-weight: 600; font-size: .85rem; }
-    .side-foot .role { color: #8a91a8; font-size: .72rem; }
 
-    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(10,12,20,.5); z-index: 55; }
-    .sidebar-overlay.show { display: block; }
+    .side-foot img {
+      height: 28px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .side-foot .name {
+      color: var(--text);
+      font-weight: 600;
+      font-size: .85rem;
+    }
+
+    .side-foot .role {
+      color: #8a91a8;
+      font-size: .72rem;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 12, 20, .5);
+      z-index: 55;
+    }
+
+    .sidebar-overlay.show {
+      display: block;
+    }
+
     .sidebar-close {
       display: none;
       margin-left: auto;
@@ -143,7 +214,13 @@
     }
 
     /* ---------- Topbar ---------- */
-    .content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .content {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
     .topbar {
       background: var(--card);
       border-bottom: 1px solid var(--line);
@@ -152,8 +229,20 @@
       align-items: center;
       gap: 14px;
     }
-    .topbar .page-title { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.15rem; margin: 0; }
-    .topbar .page-sub { font-size: .78rem; color: var(--text-soft); margin: 0; }
+
+    .topbar .page-title {
+      font-family: 'Sora', sans-serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+      margin: 0;
+    }
+
+    .topbar .page-sub {
+      font-size: .78rem;
+      color: var(--text-soft);
+      margin: 0;
+    }
+
     .topbar .icon-btn {
       width: 38px;
       height: 38px;
@@ -166,6 +255,7 @@
       position: relative;
       border: 1px solid var(--line);
     }
+
     .topbar .icon-btn .dot {
       position: absolute;
       top: 6px;
@@ -176,7 +266,11 @@
       background: var(--coral);
       border: 2px solid var(--card);
     }
-    .topbar .user-menu { position: relative; }
+
+    .topbar .user-menu {
+      position: relative;
+    }
+
     .topbar .user-menu-btn {
       display: flex;
       align-items: center;
@@ -189,7 +283,11 @@
       color: var(--text);
       font-family: inherit;
     }
-    .topbar .user-menu-btn:hover { border-color: var(--accent); }
+
+    .topbar .user-menu-btn:hover {
+      border-color: var(--accent);
+    }
+
     .topbar .user-menu-btn img {
       width: 32px;
       height: 32px;
@@ -197,6 +295,7 @@
       object-fit: cover;
       border: 2px solid var(--accent-soft);
     }
+
     .topbar .user-menu-name {
       font-weight: 600;
       font-size: .84rem;
@@ -205,6 +304,7 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+
     .topbar .user-menu-dropdown {
       display: none;
       position: absolute;
@@ -213,12 +313,16 @@
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: 14px;
-      box-shadow: 0 12px 32px rgba(20,24,50,.14);
+      box-shadow: 0 12px 32px rgba(20, 24, 50, .14);
       min-width: 250px;
       z-index: 80;
       overflow: hidden;
     }
-    .topbar .user-menu-dropdown.open { display: block; }
+
+    .topbar .user-menu-dropdown.open {
+      display: block;
+    }
+
     .topbar .user-menu-head {
       display: flex;
       align-items: center;
@@ -226,7 +330,14 @@
       padding: 13px 14px;
       border-bottom: 1px solid var(--line);
     }
-    .topbar .user-menu-head img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+
+    .topbar .user-menu-head img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
     .topbar .user-menu-item {
       display: flex;
       align-items: center;
@@ -237,10 +348,59 @@
       font-size: .85rem;
       cursor: pointer;
     }
-    .topbar .user-menu-item:hover { background: var(--accent-soft); }
-    .topbar .user-menu-item.logout { color: var(--coral); }
 
-    .main { padding: 26px 28px 60px; }
+    .topbar .user-menu-item:hover {
+      background: var(--accent-soft);
+    }
+
+    .topbar .user-menu-item.logout {
+      color: var(--coral);
+    }
+
+    /* ---------- Custom modal ---------- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10,12,20,.55);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal-panel {
+      background: var(--card);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 480px;
+      padding: 20px 22px;
+      box-shadow: 0 18px 50px rgba(20,24,50,.25);
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-soft);
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+    .modal-close:hover {
+      color: var(--text);
+    }
+
+    .main {
+      padding: 26px 28px 60px;
+    }
 
     /* ---------- Cards ---------- */
     .stat-card {
@@ -252,9 +412,28 @@
       align-items: center;
       gap: 14px;
     }
-    .stat-ic { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-    .stat-num { font-size: 1.5rem; font-weight: 700; line-height: 1; }
-    .stat-label { color: var(--text-soft); font-size: .78rem; margin-top: 4px; }
+
+    .stat-ic {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .stat-num {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .stat-label {
+      color: var(--text-soft);
+      font-size: .78rem;
+      margin-top: 4px;
+    }
 
     .section-card {
       background: var(--card);
@@ -263,14 +442,33 @@
       padding: 20px 22px;
       margin-bottom: 22px;
     }
-    .section-card .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-    .section-card h5 { margin: 0; font-weight: 700; }
 
-    .view { display: none; }
-    .view.active { display: block; }
+    .section-card .section-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .section-card h5 {
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
 
     /* ---------- Table ---------- */
-    table.tbl { width: 100%; border-collapse: collapse; }
+    table.tbl {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
     table.tbl thead th {
       font-size: .72rem;
       text-transform: uppercase;
@@ -282,22 +480,81 @@
       font-weight: 600;
       white-space: nowrap;
     }
-    table.tbl tbody td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; font-size: .86rem; }
-    table.tbl tbody tr:last-child td { border-bottom: none; }
-    table.tbl tbody tr:hover { background: var(--surface); }
 
-    .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600; }
-    .pill-teal { background: var(--teal-soft); color: #0a8577; }
-    .pill-amber { background: var(--amber-soft); color: #a06405; }
-    .pill-coral { background: var(--coral-soft); color: #c22f42; }
-    .pill-indigo { background: var(--accent-soft); color: #4147a8; }
+    table.tbl tbody td {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+      font-size: .86rem;
+    }
 
-    .avatar-sm { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+    table.tbl tbody tr:last-child td {
+      border-bottom: none;
+    }
 
-    .btn-accent { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .btn-accent:hover { background: #3f49c2; border-color: #3f49c2; color: #fff; }
-    .btn-ghost { background: var(--surface); border: 1px solid var(--line); color: var(--text); }
-    .btn-ghost:hover { background: #e9ebf5; color: var(--text); }
+    table.tbl tbody tr:hover {
+      background: var(--surface);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+    }
+
+    .pill-teal {
+      background: var(--teal-soft);
+      color: #0a8577;
+    }
+
+    .pill-amber {
+      background: var(--amber-soft);
+      color: #a06405;
+    }
+
+    .pill-coral {
+      background: var(--coral-soft);
+      color: #c22f42;
+    }
+
+    .pill-indigo {
+      background: var(--accent-soft);
+      color: #4147a8;
+    }
+
+    .avatar-sm {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-accent:hover {
+      background: #3f49c2;
+      border-color: #3f49c2;
+      color: #fff;
+    }
+
+    .btn-ghost {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--text);
+    }
+
+    .btn-ghost:hover {
+      background: #e9ebf5;
+      color: var(--text);
+    }
 
     /* ---------- Profile ---------- */
     .profile-head {
@@ -306,40 +563,146 @@
       gap: 20px;
       flex-wrap: wrap;
     }
+
     .profile-head img.avatar {
       width: 92px;
       height: 92px;
       border-radius: 50%;
       object-fit: cover;
-      border: 3px solid rgba(79,91,213,.4);
+      border: 3px solid rgba(79, 91, 213, .4);
     }
-    .profile-head .p-name { font-size: 1.35rem; font-weight: 700; }
-    .profile-head .p-role { color: var(--accent); font-weight: 600; font-size: .9rem; margin: 3px 0 8px; }
-    .profile-head .p-meta { display: flex; gap: 18px; flex-wrap: wrap; font-size: .82rem; color: var(--text-soft); }
-    .profile-head .p-meta strong { color: var(--text); display: block; font-size: .86rem; margin-top: 1px; }
 
-    .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
-    .detail-item { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
-    .detail-item .l { font-size: .7rem; color: var(--text-soft); text-transform: uppercase; letter-spacing: .06em; }
-    .detail-item .v { font-size: .9rem; font-weight: 600; margin-top: 4px; word-break: break-word; }
+    .profile-head .p-name {
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    .profile-head .p-role {
+      color: var(--accent);
+      font-weight: 600;
+      font-size: .9rem;
+      margin: 3px 0 8px;
+    }
+
+    .profile-head .p-meta {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      font-size: .82rem;
+      color: var(--text-soft);
+    }
+
+    .profile-head .p-meta strong {
+      color: var(--text);
+      display: block;
+      font-size: .86rem;
+      margin-top: 1px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 14px;
+    }
+
+    .detail-item {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .detail-item .l {
+      font-size: .7rem;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .detail-item .v {
+      font-size: .9rem;
+      font-weight: 600;
+      margin-top: 4px;
+      word-break: break-word;
+    }
 
     /* ---------- Notifications ---------- */
-    .notif-item { display: flex; gap: 12px; padding: 14px 6px; border-bottom: 1px solid var(--line); }
-    .notif-item:last-child { border-bottom: none; }
-    .notif-ic { width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-    .notif-item.unread { background: rgba(79,91,213,.04); border-radius: 10px; }
-    .notif-time { color: var(--text-soft); font-size: .72rem; }
+    .notif-item {
+      display: flex;
+      gap: 12px;
+      padding: 14px 6px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .notif-item:last-child {
+      border-bottom: none;
+    }
+
+    .notif-ic {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    .notif-item.unread {
+      background: rgba(79, 91, 213, .04);
+      border-radius: 10px;
+    }
+
+    .notif-time {
+      color: var(--text-soft);
+      font-size: .72rem;
+    }
 
     /* ---------- Salary ---------- */
-    .salary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
-    .salary-box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; text-align: center; }
-    .salary-box .l { font-size: .7rem; color: var(--text-soft); text-transform: uppercase; letter-spacing: .06em; }
-    .salary-box .v { font-size: 1.05rem; font-weight: 700; margin-top: 5px; font-family: 'Sora', sans-serif; }
+    .salary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 14px;
+    }
+
+    .salary-box {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .salary-box .l {
+      font-size: .7rem;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .salary-box .v {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-top: 5px;
+      font-family: 'Sora', sans-serif;
+    }
 
     @media(max-width:991px) {
-      .sidebar { position: fixed; left: -264px; z-index: 60; transition: left .2s ease; }
-      .sidebar.open { left: 0; }
-      .sidebar-close { display: inline-flex; }
+      .sidebar {
+        position: fixed;
+        left: -264px;
+        z-index: 60;
+        transition: left .2s ease;
+      }
+
+      .sidebar.open {
+        left: 0;
+      }
+
+      .sidebar-close {
+        display: inline-flex;
+      }
     }
   </style>
 </head>
@@ -368,12 +731,12 @@
         </div>
         <div class="side-link" data-view="notifications">
           <i class="bi bi-bell-fill"></i> Notifications
-          <span class="badge-pill" id="notifBadge" @if($unreadNotifications === 0) style="display:none;" @endif>{{ $unreadNotifications }}</span>
+          <span class="badge-pill" id="notifBadge" @if($unreadNotifications===0) style="display:none;" @endif>{{ $unreadNotifications }}</span>
         </div>
         <div class="side-link" data-view="salary"><i class="bi bi-cash-stack"></i> Salary</div>
 
         <div class="nav-label">Session</div>
-        <a class="side-link" href="{{ route('employee.login') }}"><i class="bi bi-box-arrow-right"></i> Back to Login</a>
+        <a href="#" class="side-link logout-link"><i class="bi bi-box-arrow-right"></i> Logout</a>
       </nav>
 
       <div class="side-foot">
@@ -410,7 +773,7 @@
                   <div class="small" style="color:var(--text-soft);">{{ $employee->employee_id }}@if($employee->designation) &middot; {{ $employee->designation }}@endif</div>
                 </div>
               </div>
-              <a href="{{ route('employee.login') }}" class="user-menu-item logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+              <a href="#" class="user-menu-item logout logout-link"><i class="bi bi-box-arrow-right"></i> Logout</a>
             </div>
           </div>
         </div>
@@ -465,12 +828,12 @@
                 <h5 class="mb-3">Today's Attendance</h5>
                 <div class="mb-2">
                   @if($todayAtt)
-                    @php $s = $todayAtt->status; @endphp
-                    <span class="pill {{ $s === 'present' ? 'pill-teal' : ($s === 'half-day' ? 'pill-amber' : ($s === 'On Leave' ? 'pill-indigo' : 'pill-coral')) }}">
-                      {{ $s === 'On Leave' ? 'On Leave' : ucfirst($s) }}
-                    </span>
+                  @php $s = $todayAtt->status; @endphp
+                  <span class="pill {{ $s === 'present' ? 'pill-teal' : ($s === 'half-day' ? 'pill-amber' : ($s === 'On Leave' ? 'pill-indigo' : 'pill-coral')) }}">
+                    {{ $s === 'On Leave' ? 'On Leave' : ucfirst($s) }}
+                  </span>
                   @else
-                    <span class="pill pill-coral">Not Clocked In</span>
+                  <span class="pill pill-coral">Not Clocked In</span>
                   @endif
                 </div>
                 <div class="row text-center g-3">
@@ -488,7 +851,7 @@
                   </div>
                 </div>
                 @if($todayAtt?->location_name)
-                  <div class="small mt-3" style="color:var(--text-soft);"><i class="bi bi-geo-alt"></i> {{ $todayAtt->location_name }}</div>
+                <div class="small mt-3" style="color:var(--text-soft);"><i class="bi bi-geo-alt"></i> {{ $todayAtt->location_name }}</div>
                 @endif
               </div>
             </div>
@@ -502,21 +865,28 @@
                 <div class="table-responsive">
                   <table class="tbl">
                     <thead>
-                      <tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th></tr>
+                      <tr>
+                        <th>Date</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Status</th>
+                      </tr>
                     </thead>
                     <tbody>
                       @forelse($attendances->take(6) as $att)
-                        <tr>
-                          <td>{{ $att->date->format('d M Y') }}</td>
-                          <td class="mono">{{ $att->check_in ? $att->check_in->format('h:i A') : '--' }}</td>
-                          <td class="mono">{{ $att->check_out ? $att->check_out->format('h:i A') : '--' }}</td>
-                          <td>
-                            @php $s = $att->status; @endphp
-                            <span class="pill {{ $s === 'present' ? 'pill-teal' : ($s === 'half-day' ? 'pill-amber' : ($s === 'On Leave' ? 'pill-indigo' : 'pill-coral')) }}">{{ $s === 'On Leave' ? 'On Leave' : ucfirst($s) }}</span>
-                          </td>
-                        </tr>
+                      <tr>
+                        <td>{{ $att->date->format('d M Y') }}</td>
+                        <td class="mono">{{ $att->check_in ? $att->check_in->format('h:i A') : '--' }}</td>
+                        <td class="mono">{{ $att->check_out ? $att->check_out->format('h:i A') : '--' }}</td>
+                        <td>
+                          @php $s = $att->status; @endphp
+                          <span class="pill {{ $s === 'present' ? 'pill-teal' : ($s === 'half-day' ? 'pill-amber' : ($s === 'On Leave' ? 'pill-indigo' : 'pill-coral')) }}">{{ $s === 'On Leave' ? 'On Leave' : ucfirst($s) }}</span>
+                        </td>
+                      </tr>
                       @empty
-                        <tr><td colspan="4" style="color:var(--text-soft);">No attendance records yet.</td></tr>
+                      <tr>
+                        <td colspan="4" style="color:var(--text-soft);">No attendance records yet.</td>
+                      </tr>
                       @endforelse
                     </tbody>
                   </table>
@@ -544,20 +914,63 @@
           </div>
 
           <div class="section-card">
-            <h5 class="mb-3">Profile Details</h5>
+            <div class="section-head">
+              <h5 class="mb-0">Profile Details</h5>
+              <button type="button" class="btn btn-accent btn-sm ms-auto" id="editProfileBtn"><i class="bi bi-pencil-fill"></i> Edit Profile</button>
+            </div>
             <div class="detail-grid">
-              <div class="detail-item"><div class="l">Email</div><div class="v">{{ $employee->email ?? '—' }}</div></div>
-              <div class="detail-item"><div class="l">Gender</div><div class="v">{{ $employee->gender ?? '—' }}</div></div>
-              <div class="detail-item"><div class="l">Age</div><div class="v">{{ $employee->age ?? '—' }}</div></div>
-              <div class="detail-item"><div class="l">Date of Birth</div><div class="v">{{ $employee->dob?->format('d M Y') ?? '—' }}</div></div>
-              <div class="detail-item"><div class="l">Join Date</div><div class="v">{{ $employee->join_date?->format('d M Y') ?? '—' }}</div></div>
+              <div class="detail-item">
+                <div class="l">Email</div>
+                <div class="v">{{ $employee->email ?? '—' }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="l">Mobile Number</div>
+                <div class="v" id="profMobile">{{ $employee->mobile ?? '—' }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="l">Emergency Contact</div>
+                <div class="v" id="profEmergency">{{ $employee->emergency_contact ?? '—' }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="l">Gender</div>
+                <div class="v">{{ $employee->gender ?? '—' }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="l">Age</div>
+                <div class="v">{{ $employee->age ?? '—' }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="l">Date of Birth</div>
+                <div class="v">{{ $employee->dob?->format('d M Y') ?? '—' }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="l">Join Date</div>
+                <div class="v">{{ $employee->join_date?->format('d M Y') ?? '—' }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="l">State</div>
+                <div class="v" id="profState">{{ $employee->state ?? '—' }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="l">City</div>
+                <div class="v" id="profCity">{{ $employee->city ?? '—' }}</div>
+              </div>
               <div class="detail-item">
                 <div class="l">Shift</div>
                 <div class="v">{{ $employee->shift_start && $employee->shift_end ? Carbon\Carbon::parse($employee->shift_start)->format('h:i A') . ' – ' . Carbon\Carbon::parse($employee->shift_end)->format('h:i A') : '—' }}</div>
               </div>
-              <div class="detail-item"><div class="l">Salary</div><div class="v">&#8377; {{ number_format($employee->salary ?? 0, 2) }}</div></div>
-              <div class="detail-item"><div class="l">Blood Group</div><div class="v">{{ $employee->blood_group ?? '—' }}</div></div>
-              <div class="detail-item"><div class="l">Paid Leaves</div><div class="v">{{ $paidLeavesTotal }}</div></div>
+              <div class="detail-item">
+                <div class="l">Salary</div>
+                <div class="v">&#8377; {{ number_format($employee->salary ?? 0, 2) }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="l">Blood Group</div>
+                <div class="v" id="profBlood">{{ $employee->blood_group ?? '—' }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="l">Paid Leaves</div>
+                <div class="v">{{ $paidLeavesTotal }}</div>
+              </div>
             </div>
           </div>
         </section>
@@ -571,24 +984,32 @@
             <div class="table-responsive">
               <table class="tbl">
                 <thead>
-                  <tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Hours</th><th>Status</th></tr>
+                  <tr>
+                    <th>Date</th>
+                    <th>Check In</th>
+                    <th>Check Out</th>
+                    <th>Hours</th>
+                    <th>Status</th>
+                  </tr>
                 </thead>
                 <tbody>
                   @forelse($attendances as $att)
-                    <tr>
-                      <td>{{ $att->date->format('d M Y') }}</td>
-                      <td class="mono">{{ $att->check_in ? $att->check_in->format('h:i:s A') : '—' }}</td>
-                      <td class="mono">{{ $att->check_out ? $att->check_out->format('h:i:s A') : '—' }}</td>
-                      <td class="mono">
-                        {{ $att->check_in && $att->check_out ? Carbon\Carbon::parse($att->check_in)->diffInHours(Carbon\Carbon::parse($att->check_out)) . 'h' : '—' }}
-                      </td>
-                      <td>
-                        @php $s = $att->status; @endphp
-                        <span class="pill {{ $s === 'present' ? 'pill-teal' : ($s === 'half-day' ? 'pill-amber' : ($s === 'On Leave' ? 'pill-indigo' : 'pill-coral')) }}">{{ $s === 'On Leave' ? 'On Leave' : ucfirst($s) }}</span>
-                      </td>
-                    </tr>
+                  <tr>
+                    <td>{{ $att->date->format('d M Y') }}</td>
+                    <td class="mono">{{ $att->check_in ? $att->check_in->format('h:i:s A') : '—' }}</td>
+                    <td class="mono">{{ $att->check_out ? $att->check_out->format('h:i:s A') : '—' }}</td>
+                    <td class="mono">
+                      {{ $att->check_in && $att->check_out ? Carbon\Carbon::parse($att->check_in)->diffInHours(Carbon\Carbon::parse($att->check_out)) . 'h' : '—' }}
+                    </td>
+                    <td>
+                      @php $s = $att->status; @endphp
+                      <span class="pill {{ $s === 'present' ? 'pill-teal' : ($s === 'half-day' ? 'pill-amber' : ($s === 'On Leave' ? 'pill-indigo' : 'pill-coral')) }}">{{ $s === 'On Leave' ? 'On Leave' : ucfirst($s) }}</span>
+                    </td>
+                  </tr>
                   @empty
-                    <tr><td colspan="5" style="color:var(--text-soft);">No attendance records found.</td></tr>
+                  <tr>
+                    <td colspan="5" style="color:var(--text-soft);">No attendance records found.</td>
+                  </tr>
                   @endforelse
                 </tbody>
               </table>
@@ -602,25 +1023,37 @@
             <div class="col-6 col-lg-3">
               <div class="stat-card">
                 <div class="stat-ic" style="background:var(--accent-soft);color:var(--accent);"><i class="bi bi-calendar-check"></i></div>
-                <div><div class="stat-num">{{ $paidLeavesTotal }}</div><div class="stat-label">Allocated Leaves</div></div>
+                <div>
+                  <div class="stat-num">{{ $paidLeavesTotal }}</div>
+                  <div class="stat-label">Allocated Leaves</div>
+                </div>
               </div>
             </div>
             <div class="col-6 col-lg-3">
               <div class="stat-card">
                 <div class="stat-ic" style="background:var(--amber-soft);color:#a06405;"><i class="bi bi-calendar-x"></i></div>
-                <div><div class="stat-num">{{ $usedLeaveDays }}</div><div class="stat-label">Used Leaves</div></div>
+                <div>
+                  <div class="stat-num">{{ $usedLeaveDays }}</div>
+                  <div class="stat-label">Used Leaves</div>
+                </div>
               </div>
             </div>
             <div class="col-6 col-lg-3">
               <div class="stat-card">
                 <div class="stat-ic" style="background:var(--teal-soft);color:#0a8577;"><i class="bi bi-calendar-minus"></i></div>
-                <div><div class="stat-num">{{ $remainingLeaves }}</div><div class="stat-label">Remaining</div></div>
+                <div>
+                  <div class="stat-num">{{ $remainingLeaves }}</div>
+                  <div class="stat-label">Remaining</div>
+                </div>
               </div>
             </div>
             <div class="col-6 col-lg-3">
               <div class="stat-card">
                 <div class="stat-ic" style="background:var(--coral-soft);color:#c22f42;"><i class="bi bi-hourglass-split"></i></div>
-                <div><div class="stat-num">{{ $pendingLeaves->count() }}</div><div class="stat-label">Pending</div></div>
+                <div>
+                  <div class="stat-num">{{ $pendingLeaves->count() }}</div>
+                  <div class="stat-label">Pending</div>
+                </div>
               </div>
             </div>
           </div>
@@ -663,30 +1096,39 @@
 
             <div class="col-lg-7">
               <div class="section-card">
-                <div class="section-head"><h5>My Requests</h5></div>
+                <div class="section-head">
+                  <h5>My Requests</h5>
+                </div>
                 <div class="table-responsive">
                   <table class="tbl">
                     <thead>
-                      <tr><th>Type</th><th>Dates</th><th>Reason</th><th>Status</th></tr>
+                      <tr>
+                        <th>Type</th>
+                        <th>Dates</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                      </tr>
                     </thead>
                     <tbody>
                       @forelse($leaves as $l)
-                        <tr>
-                          <td>{{ $l->type }}</td>
-                          <td class="mono">{{ $l->from_date->format('d M Y') }} &rarr; {{ $l->to_date->format('d M Y') }}</td>
-                          <td>{{ $l->reason ?? '—' }}</td>
-                          <td>
-                            @if($l->status === 'Approved')
-                              <span class="pill pill-teal">Approved</span>
-                            @elseif($l->status === 'Rejected')
-                              <span class="pill pill-coral">Rejected</span>
-                            @else
-                              <span class="pill pill-amber">Pending</span>
-                            @endif
-                          </td>
-                        </tr>
+                      <tr>
+                        <td>{{ $l->type }}</td>
+                        <td class="mono">{{ $l->from_date->format('d M Y') }} &rarr; {{ $l->to_date->format('d M Y') }}</td>
+                        <td>{{ $l->reason ?? '—' }}</td>
+                        <td>
+                          @if($l->status === 'Approved')
+                          <span class="pill pill-teal">Approved</span>
+                          @elseif($l->status === 'Rejected')
+                          <span class="pill pill-coral">Rejected</span>
+                          @else
+                          <span class="pill pill-amber">Pending</span>
+                          @endif
+                        </td>
+                      </tr>
                       @empty
-                        <tr><td colspan="4" style="color:var(--text-soft);">No requests yet.</td></tr>
+                      <tr>
+                        <td colspan="4" style="color:var(--text-soft);">No requests yet.</td>
+                      </tr>
                       @endforelse
                     </tbody>
                   </table>
@@ -698,24 +1140,24 @@
 
         <!-- ================= NOTIFICATIONS VIEW ================= -->
         <section class="view" id="view-notifications">
-            <div class="section-card">
+          <div class="section-card">
             <div class="section-head">
               <h5>Notifications</h5>
               @if($unreadNotifications > 0)
-                <button class="btn btn-ghost btn-sm ms-auto" id="empMarkReadBtn">Mark all as read</button>
+              <button class="btn btn-ghost btn-sm ms-auto" id="empMarkReadBtn">Mark all as read</button>
               @endif
             </div>
             @forelse($notifications as $n)
-              <div class="notif-item @if(!$n->is_read) unread @endif">
-                <div class="notif-ic" style="background:var(--accent-soft);color:var(--accent);"><i class="bi {{ $n->type ?? 'bi-bell-fill' }}"></i></div>
-                <div>
-                  <div class="fw-semibold" style="font-size:.88rem;">{{ $n->title }}</div>
-                  <div class="small" style="color:var(--text-soft);">{{ $n->body }}</div>
-                  <div class="notif-time">{{ $n->created_at->diffForHumans() }}</div>
-                </div>
+            <div class="notif-item @if(!$n->is_read) unread @endif">
+              <div class="notif-ic" style="background:var(--accent-soft);color:var(--accent);"><i class="bi {{ $n->type ?? 'bi-bell-fill' }}"></i></div>
+              <div>
+                <div class="fw-semibold" style="font-size:.88rem;">{{ $n->title }}</div>
+                <div class="small" style="color:var(--text-soft);">{{ $n->body }}</div>
+                <div class="notif-time">{{ $n->created_at->diffForHumans() }}</div>
               </div>
+            </div>
             @empty
-              <div style="color:var(--text-soft);padding:14px 6px;">No notifications.</div>
+            <div style="color:var(--text-soft);padding:14px 6px;">No notifications.</div>
             @endforelse
           </div>
         </section>
@@ -727,14 +1169,38 @@
               <h5>Salary Calculation - {{ $monthStart->format('F Y') }}</h5>
             </div>
             <div class="salary-grid mb-4">
-              <div class="salary-box"><div class="l">Base Salary</div><div class="v">&#8377; {{ number_format($baseSalary, 0) }}</div></div>
-              <div class="salary-box"><div class="l">Per Day</div><div class="v">&#8377; {{ number_format($perDay, 0) }}</div></div>
-              <div class="salary-box"><div class="l">Eligible Days</div><div class="v">{{ $eligibleDays }}</div></div>
-              <div class="salary-box"><div class="l">Days Worked</div><div class="v">{{ number_format($workedDays, 1) }}</div></div>
-              <div class="salary-box"><div class="l">Half Days</div><div class="v">{{ $halfDayCount }}</div></div>
-              <div class="salary-box"><div class="l">Leave Days</div><div class="v">{{ $approvedLeaveDaysThisMonth }}</div></div>
-              <div class="salary-box"><div class="l">Deductible Days</div><div class="v">{{ number_format($deductibleDays, 1) }}</div></div>
-              <div class="salary-box" style="border-color:var(--teal);"><div class="l">Final Salary</div><div class="v" style="color:#0a8577;">&#8377; {{ number_format($finalSalary, 2) }}</div></div>
+              <div class="salary-box">
+                <div class="l">Base Salary</div>
+                <div class="v">&#8377; {{ number_format($baseSalary, 0) }}</div>
+              </div>
+              <div class="salary-box">
+                <div class="l">Per Day</div>
+                <div class="v">&#8377; {{ number_format($perDay, 0) }}</div>
+              </div>
+              <div class="salary-box">
+                <div class="l">Eligible Days</div>
+                <div class="v">{{ $eligibleDays }}</div>
+              </div>
+              <div class="salary-box">
+                <div class="l">Days Worked</div>
+                <div class="v">{{ number_format($workedDays, 1) }}</div>
+              </div>
+              <div class="salary-box">
+                <div class="l">Half Days</div>
+                <div class="v">{{ $halfDayCount }}</div>
+              </div>
+              <div class="salary-box">
+                <div class="l">Leave Days</div>
+                <div class="v">{{ $approvedLeaveDaysThisMonth }}</div>
+              </div>
+              <div class="salary-box">
+                <div class="l">Deductible Days</div>
+                <div class="v">{{ number_format($deductibleDays, 1) }}</div>
+              </div>
+              <div class="salary-box" style="border-color:var(--teal);">
+                <div class="l">Final Salary</div>
+                <div class="v" style="color:#0a8577;">&#8377; {{ number_format($finalSalary, 2) }}</div>
+              </div>
             </div>
             <p class="small" style="color:var(--text-soft);">
               Calculation: Base (&#8377;{{ number_format($baseSalary, 0) }}) &divide; 30 &times; Days Worked ({{ number_format($workedDays, 1) }}) = &#8377;{{ number_format($finalSalary, 2) }}
@@ -742,24 +1208,35 @@
           </div>
 
           <div class="section-card">
-            <div class="section-head"><h5>Salary History</h5></div>
+            <div class="section-head">
+              <h5>Salary History</h5>
+            </div>
             <div class="table-responsive">
               <table class="tbl">
                 <thead>
-                  <tr><th>Month</th><th>Base</th><th>Absent</th><th>Leave</th><th>Deductible</th><th>Final</th></tr>
+                  <tr>
+                    <th>Month</th>
+                    <th>Base</th>
+                    <th>Absent</th>
+                    <th>Leave</th>
+                    <th>Deductible</th>
+                    <th>Final</th>
+                  </tr>
                 </thead>
                 <tbody>
                   @forelse($salaryRecords as $s)
-                    <tr>
-                      <td>{{ \Carbon\Carbon::parse($s->month . '-01')->format('F Y') }}</td>
-                      <td>&#8377; {{ number_format($s->base_salary, 2) }}</td>
-                      <td>{{ $s->absent_days }}</td>
-                      <td>{{ $s->leave_days }}</td>
-                      <td>{{ $s->deductible_days }}</td>
-                      <td class="fw-semibold">&#8377; {{ number_format($s->final_salary, 2) }}</td>
-                    </tr>
+                  <tr>
+                    <td>{{ \Carbon\Carbon::parse($s->month . '-01')->format('F Y') }}</td>
+                    <td>&#8377; {{ number_format($s->base_salary, 2) }}</td>
+                    <td>{{ $s->absent_days }}</td>
+                    <td>{{ $s->leave_days }}</td>
+                    <td>{{ $s->deductible_days }}</td>
+                    <td class="fw-semibold">&#8377; {{ number_format($s->final_salary, 2) }}</td>
+                  </tr>
                   @empty
-                    <tr><td colspan="6" style="color:var(--text-soft);">No processed salary records yet.</td></tr>
+                  <tr>
+                    <td colspan="6" style="color:var(--text-soft);">No processed salary records yet.</td>
+                  </tr>
                   @endforelse
                 </tbody>
               </table>
@@ -771,9 +1248,63 @@
     </div>
   </div>
 
+  <!-- ============ Edit Profile modal ============ -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h6 class="mb-0">Edit Profile</h6>
+        <button type="button" class="modal-close" id="profileModalClose"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <form id="profileEditForm">
+        <input type="hidden" id="profEmployeeId" value="{{ $employee->employee_id }}">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Mobile Number</label>
+          <input type="text" id="profMobileInput" class="form-control form-control-sm" maxlength="20" placeholder="Enter mobile number">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Emergency Contact</label>
+          <input type="text" id="profEmergencyInput" class="form-control form-control-sm" maxlength="20" placeholder="Enter emergency contact number">
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="form-label small fw-semibold">State</label>
+            <input type="text" id="profStateInput" class="form-control form-control-sm" maxlength="100" placeholder="Enter state">
+          </div>
+          <div class="col-6">
+            <label class="form-label small fw-semibold">City</label>
+            <input type="text" id="profCityInput" class="form-control form-control-sm" maxlength="100" placeholder="Enter city">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Blood Group</label>
+          <select id="profBloodInput" class="form-select form-select-sm">
+            <option value="">Select blood group</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+          </select>
+        </div>
+        <div id="profileMsg" class="small mb-0"></div>
+        <div class="d-flex gap-2 justify-content-end mt-3">
+          <button type="button" class="btn btn-ghost btn-sm" id="profileModalCancel">Cancel</button>
+          <button type="submit" class="btn btn-accent btn-sm"><i class="bi bi-check-lg"></i> Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script>
-    $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+    $.ajaxSetup({
+      headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+      }
+    });
 
     var viewMeta = {
       dashboard: ['Dashboard', 'Overview of your attendance and leaves'],
@@ -796,64 +1327,129 @@
       $('#sidebarOverlay').removeClass('show');
     }
 
-    $(document).on('click', '.side-link[data-view]', function () {
+    $(document).on('click', '.side-link[data-view]', function() {
       switchView($(this).data('view'));
     });
 
-    $('#burgerBtn').on('click', function () {
+    $('#burgerBtn').on('click', function() {
       $('#sidebar').addClass('open');
       $('#sidebarOverlay').addClass('show');
     });
-    $('#sidebarCloseBtn, #sidebarOverlay').on('click', function () {
+    $('#sidebarCloseBtn, #sidebarOverlay').on('click', function() {
       $('#sidebar').removeClass('open');
       $('#sidebarOverlay').removeClass('show');
     });
 
-    $('#leaveForm').on('submit', function (e) {
+    $('#leaveForm').on('submit', function(e) {
       e.preventDefault();
       var $msg = $('#leaveMsg');
       $msg.removeClass('text-danger text-success').text('');
       $.post('{{ route("employee.leave") }}', $(this).serialize())
-        .done(function (resp) {
+        .done(function(resp) {
           $msg.addClass('text-success').text(resp.message);
-          setTimeout(function () { location.reload(); }, 1200);
+          setTimeout(function() {
+            location.reload();
+          }, 1200);
         })
-        .fail(function (xhr) {
+        .fail(function(xhr) {
           var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Failed to submit request.';
           $msg.addClass('text-danger').text(msg);
         });
     });
 
-    $('#empMarkReadBtn').on('click', function () {
+    $('#empMarkReadBtn').on('click', function() {
       var $btn = $(this);
       $btn.prop('disabled', true);
-      $.post('{{ route("employee.notifications.read") }}', { employee_id: '{{ $employee->employee_id }}' })
-        .done(function () {
+      $.post('{{ route("employee.notifications.read") }}', {
+          employee_id: '{{ $employee->employee_id }}'
+        })
+        .done(function() {
           $('.notif-item').removeClass('unread');
           $('#notifBadge').hide();
           $('#topEmpNotifDot').remove();
           $btn.remove();
         })
-        .fail(function () {
+        .fail(function() {
           $btn.prop('disabled', false);
           alert('Failed to mark notifications as read.');
         });
     });
 
     /* ---------------- User menu dropdown ---------------- */
-    $('#userMenuBtn').on('click', function (e) {
+    $('#userMenuBtn').on('click', function(e) {
       e.stopPropagation();
       $('#userMenuDropdown').toggleClass('open');
     });
-    $(document).on('click', function (e) {
+    $(document).on('click', function(e) {
       if (!$(e.target).closest('.user-menu').length) {
         $('#userMenuDropdown').removeClass('open');
       }
     });
-    $(document).on('keydown', function (e) {
+    $(document).on('keydown', function(e) {
       if (e.key === 'Escape') $('#userMenuDropdown').removeClass('open');
+    });
+
+    /* ---------------- Logout ---------------- */
+    $(document).on('click', '.logout-link', function(e) {
+      e.preventDefault();
+      $.post('{{ route("employee.logout") }}', { _token: '{{ csrf_token() }}' })
+        .done(function() { window.location.href = '/'; })
+        .fail(function() { window.location.href = '/'; });
+    });
+
+    /* ---------------- Edit profile ---------------- */
+    function openProfileEdit() {
+      $('#profMobileInput').val('{{ $employee->mobile }}');
+      $('#profEmergencyInput').val('{{ $employee->emergency_contact }}');
+      $('#profStateInput').val('{{ $employee->state }}');
+      $('#profCityInput').val('{{ $employee->city }}');
+      $('#profBloodInput').val('{{ $employee->blood_group }}');
+      $('#profileMsg').removeClass('text-danger text-success').text('');
+      $('#profileModal').addClass('show');
+    }
+    function closeProfileEdit() {
+      $('#profileModal').removeClass('show');
+    }
+    $('#editProfileBtn').on('click', openProfileEdit);
+    $('#profileModalClose, #profileModalCancel').on('click', closeProfileEdit);
+    $('#profileModal').on('click', function(e) {
+      if (e.target === this) closeProfileEdit();
+    });
+    $(document).on('keydown', function(e) {
+      if (e.key === 'Escape') closeProfileEdit();
+    });
+
+    $('#profileEditForm').on('submit', function(e) {
+      e.preventDefault();
+      var $msg = $('#profileMsg');
+      $msg.removeClass('text-danger text-success').text('');
+      var $btn = $(this).find('button[type=submit]');
+      $btn.prop('disabled', true);
+
+      $.post('{{ route("employee.profile.update") }}', {
+        employee_id: $('#profEmployeeId').val(),
+        mobile: $('#profMobileInput').val().trim(),
+        emergency_contact: $('#profEmergencyInput').val().trim(),
+        state: $('#profStateInput').val().trim(),
+        city: $('#profCityInput').val().trim(),
+        blood_group: $('#profBloodInput').val()
+      }).done(function(resp) {
+        $('#profMobile').text($('#profMobileInput').val().trim() || '—');
+        $('#profEmergency').text($('#profEmergencyInput').val().trim() || '—');
+        $('#profState').text($('#profStateInput').val().trim() || '—');
+        $('#profCity').text($('#profCityInput').val().trim() || '—');
+        $('#profBlood').text($('#profBloodInput').val() || '—');
+        $msg.addClass('text-success').text(resp.message || 'Profile updated.');
+        setTimeout(closeProfileEdit, 800);
+      }).fail(function(xhr) {
+        var m = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Failed to update profile.';
+        $msg.addClass('text-danger').text(m);
+      }).always(function() {
+        $btn.prop('disabled', false);
+      });
     });
   </script>
 
 </body>
+
 </html>
