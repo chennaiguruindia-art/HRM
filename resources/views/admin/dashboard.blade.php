@@ -2212,6 +2212,15 @@
       });
     }
 
+    function fmtMonthLabel(m) {
+      var parts = String(m || "").split("-");
+      if (parts.length === 2 && /^\d{4}$/.test(parts[0]) && /^\d{1,2}$/.test(parts[1])) {
+        var names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        return names[parseInt(parts[1], 10) - 1] + "-" + parts[0];
+      }
+      return m;
+    }
+
     function renderSalaryCalculations(rows) {
       if (!rows.length) {
         $("#salaryBody").html('<tr><td colspan="9" class="text-center text-muted py-4">No salary records yet.</td></tr>');
@@ -2220,7 +2229,7 @@
       $("#salaryBody").html(rows.map(function(s) {
         return "<tr>" +
           "<td><div class='d-flex align-items-center gap-2'><img class='avatar-sm' src='" + s.employee_img + "'><div><div class='fw-semibold'>" + s.employee_name + "</div></div></div></td>" +
-          "<td class='mono'>" + s.month + "</td>" +
+          "<td class='mono'>" + fmtMonthLabel(s.month) + "</td>" +
           "<td class='mono'>" + fmtSalary(s.base_salary) + "</td>" +
           "<td>" + s.absent_days + "</td>" +
           "<td>" + s.leave_days + "</td>" +
@@ -2294,11 +2303,22 @@
     $("#salaryForm").on("submit", function(e) {
       e.preventDefault();
       const formData = new FormData(this);
-      apiPost(API.salaryCalculations, formData).then(function() {
+      $.ajax({
+        url: API.salaryCalculations,
+        method: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: "json",
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+      }).then(function(res) {
         loadSalaryCalculations();
         bootstrap.Modal.getInstance(document.getElementById("salaryModal")).hide();
       }).fail(function(xhr) {
         console.error("Salary calculation failed", xhr.responseJSON || xhr.statusText);
+        alert("Failed to save calculation: " + ((xhr.responseJSON && (xhr.responseJSON.message || JSON.stringify(xhr.responseJSON.errors))) || "unknown error"));
       });
     });
 

@@ -1226,7 +1226,7 @@
                 <tbody>
                   @forelse($salaryRecords as $s)
                   <tr>
-                    <td>{{ \Carbon\Carbon::parse($s->month . '-01')->format('F Y') }}</td>
+                    <td>{{ \Carbon\Carbon::createFromFormat('F-Y', $s->month)->format('F Y') }}</td>
                     <td>&#8377; {{ number_format($s->base_salary, 2) }}</td>
                     <td>{{ $s->absent_days }}</td>
                     <td>{{ $s->leave_days }}</td>

@@ -577,12 +577,25 @@ class ApiController extends Controller
         return response()->json($records);
     }
 
+    private function normalizeMonth(string $month): string
+    {
+        if (preg_match('/^\d{4}-\d{2}$/', $month)) {
+            return $month;
+        }
+
+        $date = Carbon::createFromFormat('F-Y', $month);
+
+        return $date ? $date->format('Y-m') : $month;
+    }
+
     public function salaryPreview(Request $request): JsonResponse
     {
         $data = $request->validate([
             'employee_id' => 'required|string|exists:employees,employee_id',
-            'month' => 'required|string|max:7',
+            'month' => 'required|string|max:16',
         ]);
+
+        $data['month'] = $this->normalizeMonth($data['month']);
 
         $employee = Employee::where('employee_id', $data['employee_id'])->firstOrFail();
         $baseSalary = $employee->salary ?? 0;
@@ -656,8 +669,10 @@ class ApiController extends Controller
             'base_salary' => 'nullable|numeric|min:0',
             'absent_days' => 'nullable|integer|min:0',
             'leave_days' => 'nullable|integer|min:0',
-            'month' => 'required|string|max:7',
+            'month' => 'required|string|max:16',
         ]);
+
+        $data['month'] = $this->normalizeMonth($data['month']);
 
         $employee = Employee::where('employee_id', $data['employee_id'])->firstOrFail();
 
@@ -713,18 +728,33 @@ class ApiController extends Controller
         $perDay = $baseSalary / 30;
         $finalSalary = max(0, round($perDay * $workedDays, 2));
 
-        $record = SalaryCalculation::updateOrCreate(
-            ['employee_id' => $employee->id, 'month' => $data['month']],
-            [
-                'processed_by' => auth()->id(),
-                'base_salary' => $baseSalary,
-                'absent_days' => $absentDays,
-                'leave_days' => $leaveDays,
-                'paid_leaves_used' => $paidLeavesUsed,
-                'deductible_days' => $deductibleDays,
-                'final_salary' => $finalSalary,
-            ]
-        );
+        $monthKey = Carbon::create((int)$year, (int)$monthNum, 1)->format('F-Y');
+
+        $existing = SalaryCalculation::where('employee_id', $employee->id)
+            ->where(function ($q) use ($data, $monthKey) {
+                $q->where('month', $data['month'])->orWhere('month', $monthKey);
+            })
+            ->first();
+
+        $payload = [
+            'processed_by' => auth()->id(),
+            'base_salary' => $baseSalary,
+            'absent_days' => $absentDays,
+            'leave_days' => $leaveDays,
+            'paid_leaves_used' => $paidLeavesUsed,
+            'deductible_days' => $deductibleDays,
+            'final_salary' => $finalSalary,
+        ];
+
+        if ($existing) {
+            $existing->update($payload);
+            $record = $existing;
+        } else {
+            $record = SalaryCalculation::create(array_merge($payload, [
+                'employee_id' => $employee->id,
+                'month' => $monthKey,
+            ]));
+        }
 
         return response()->json(['success' => true, 'record' => $record]);
     }
