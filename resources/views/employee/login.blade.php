@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Employee Attendance - Guru Group</title>
+  <link rel="icon" type="image/png" href="{{ asset('logo/guru.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <style>
@@ -36,6 +37,7 @@
       font-weight: 700;
       margin-bottom: 4px;
     }
+    .brand .brand-logo { height: 44px; width: auto; object-fit: contain; margin-bottom: 10px; }
     .brand span { color: #0fb5a3; }
     .brand small { color: #6f7794; font-weight: 500; font-size: .75rem; display: block; margin-top: 2px; }
 
@@ -150,6 +152,7 @@
 </head>
 <body>
   <div class="card">
+    <img src="{{ asset('logo/guru.png') }}" class="brand-logo" alt="Guru Group">
     <div class="brand">Guru Group <span>Attendance</span><small>Employee Portal</small></div>
 
     <div class="clock-wrap">

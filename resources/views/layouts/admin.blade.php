@@ -4,13 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Laravel') }} - Admin</title>
+    <title>Guru Group - Admin</title>
+    <link rel="icon" type="image/png" href="{{ asset('logo/guru.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{{ route('admin.dashboard') }}">{{ config('app.name') }}</a>
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ route('admin.dashboard') }}"><img src="{{ asset('logo/guru.png') }}" alt="Guru Group" style="height:32px;width:auto;">Guru Group</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
                 <span class="navbar-toggler-icon"></span>
             </button>

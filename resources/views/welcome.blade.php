@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Guru Group Attendance</title>
+  <link rel="icon" type="image/png" href="{{ asset('logo/guru.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -34,6 +35,12 @@
       font-size: 2rem;
       font-weight: 800;
       margin-bottom: 6px;
+    }
+    .left .brand-logo {
+      height: 56px;
+      width: auto;
+      object-fit: contain;
+      margin-bottom: 14px;
     }
     .left .brand span {
       color: #0fb5a3;
@@ -146,6 +153,7 @@
 <body>
   <div class="container">
     <div class="left">
+      <img src="{{ asset('logo/guru.png') }}" class="brand-logo" alt="Guru Group">
       <div class="brand">Guru Group <span>Attendance</span></div>
       <div class="sub">Streamlined workforce management — track check-ins, leaves, and payroll all in one place.</div>
 

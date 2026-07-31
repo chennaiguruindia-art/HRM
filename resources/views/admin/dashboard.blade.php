@@ -5,7 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>Staffly &mdash; Admin Dashboard</title>
+  <title>Guru Group &mdash; Admin Dashboard</title>
+  <link rel="icon" type="image/png" href="{{ asset('logo/guru.png') }}">
 
   <!-- Bootstrap 5 -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
@@ -85,13 +86,14 @@
     .sidebar {
       width: 264px;
       flex-shrink: 0;
-      background: linear-gradient(180deg, var(--ink-900) 0%, var(--ink-800) 100%);
-      color: #c8cce0;
+      background: linear-gradient(180deg, #ffffff 0%, #f3f5fb 100%);
+      color: #2a2f45;
       display: flex;
       flex-direction: column;
       position: sticky;
       top: 0;
       height: 100vh;
+      border-right: 1px solid var(--line);
     }
 
     .brand {
@@ -99,18 +101,16 @@
       align-items: center;
       gap: 10px;
       padding: 22px 22px 18px 22px;
-      color: #fff;
+      color: var(--text);
       font-weight: 700;
       font-size: 1.15rem;
-      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      border-bottom: 1px solid var(--line);
     }
 
-    .brand .dot {
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-      background: var(--teal);
-      box-shadow: 0 0 0 4px rgba(15, 181, 163, .18);
+    .brand .brand-logo {
+      height: 34px;
+      width: auto;
+      object-fit: contain;
     }
 
     .side-nav {
@@ -123,7 +123,7 @@
       font-size: .68rem;
       letter-spacing: .12em;
       text-transform: uppercase;
-      color: #6f7794;
+      color: #8a91a8;
       padding: 14px 12px 6px;
     }
 
@@ -134,7 +134,7 @@
       padding: 10px 14px;
       margin-bottom: 3px;
       border-radius: 10px;
-      color: #aeb4cf;
+      color: #5b6278;
       font-weight: 500;
       cursor: pointer;
       position: relative;
@@ -158,13 +158,13 @@
     }
 
     .side-link:hover {
-      background: rgba(255, 255, 255, .06);
-      color: #fff;
+      background: #e9ebf5;
+      color: var(--text);
     }
 
     .side-link.active {
-      background: rgba(79, 91, 213, .22);
-      color: #fff;
+      background: var(--accent-soft);
+      color: var(--accent);
     }
 
     .side-link.active::before {
@@ -180,27 +180,26 @@
 
     .side-foot {
       padding: 16px 22px 20px;
-      border-top: 1px solid rgba(255, 255, 255, .08);
+      border-top: 1px solid var(--line);
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
     .side-foot img {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      object-fit: cover;
+      height: 28px;
+      width: auto;
+      object-fit: contain;
     }
 
     .side-foot .name {
-      color: #fff;
+      color: var(--text);
       font-weight: 600;
       font-size: .85rem;
     }
 
     .side-foot .role {
-      color: #7c8399;
+      color: #8a91a8;
       font-size: .72rem;
     }
 
@@ -597,7 +596,7 @@
       margin-left: auto;
       background: transparent;
       border: none;
-      color: #c8cce0;
+      color: #5b6278;
       font-size: 1.25rem;
       line-height: 1;
       cursor: pointer;
@@ -631,7 +630,7 @@
 
     <!-- ============ SIDEBAR ============ -->
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><span class="dot"></span> Staffly<span style="color:#7c8399;font-weight:500;">.admin</span><button class="sidebar-close" id="sidebarCloseBtn"><i class="bi bi-x-lg"></i></button></div>
+      <div class="brand"><img src="{{ asset('logo/guru.png') }}" class="brand-logo" alt="Guru Group"><button class="sidebar-close" id="sidebarCloseBtn"><i class="bi bi-x-lg"></i></button></div>
 
       <nav class="side-nav">
         <div class="nav-label">Workspace</div>
@@ -676,9 +675,9 @@
       </nav>
 
       <div class="side-foot">
-        <img src="https://i.pravatar.cc/72?img=13" alt="admin">
+        <img src="{{ asset('logo/guru.png') }}" alt="Guru Group">
         <div>
-          <div class="name">Arun Kumar</div>
+          <div class="name">Guru Group</div>
           <div class="role">Super Admin</div>
         </div>
       </div>
@@ -699,7 +698,7 @@
         </div>
         <div class="ms-auto d-flex align-items-center gap-2">
           <div class="icon-btn" data-view="notifications"><i class="bi bi-bell"></i><span class="dot" id="topNotifDot" style="display:none;"></span></div>
-          <img src="https://i.pravatar.cc/72?img=13" class="avatar-sm" alt="admin">
+          <img src="{{ asset('logo/guru.png') }}" style="height:32px;width:auto;object-fit:contain;" alt="Guru Group">
         </div>
       </div>
 
@@ -1275,7 +1274,7 @@
       <div class="modal-content">
         <div class="modal-body text-center py-4">
           <i class="bi bi-box-arrow-right" style="font-size:2rem;color:var(--coral);"></i>
-          <h6 class="mt-2 mb-1">Log out of Staffly?</h6>
+          <h6 class="mt-2 mb-1">Log out of Guru Group?</h6>
           <p class="text-muted small">You'll need to sign in again to access the dashboard.</p>
           <div class="d-flex gap-2 justify-content-center mt-3">
             <button class="btn btn-ghost btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
