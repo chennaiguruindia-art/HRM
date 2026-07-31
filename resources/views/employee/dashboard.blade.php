@@ -176,6 +176,69 @@
       background: var(--coral);
       border: 2px solid var(--card);
     }
+    .topbar .user-menu { position: relative; }
+    .topbar .user-menu-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 5px 10px 5px 5px;
+      cursor: pointer;
+      color: var(--text);
+      font-family: inherit;
+    }
+    .topbar .user-menu-btn:hover { border-color: var(--accent); }
+    .topbar .user-menu-btn img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--accent-soft);
+    }
+    .topbar .user-menu-name {
+      font-weight: 600;
+      font-size: .84rem;
+      max-width: 130px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .topbar .user-menu-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(20,24,50,.14);
+      min-width: 250px;
+      z-index: 80;
+      overflow: hidden;
+    }
+    .topbar .user-menu-dropdown.open { display: block; }
+    .topbar .user-menu-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar .user-menu-head img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    .topbar .user-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      color: var(--text);
+      font-weight: 500;
+      font-size: .85rem;
+      cursor: pointer;
+    }
+    .topbar .user-menu-item:hover { background: var(--accent-soft); }
+    .topbar .user-menu-item.logout { color: var(--coral); }
 
     .main { padding: 26px 28px 60px; }
 
@@ -331,9 +394,25 @@
           <p class="page-title" id="pageTitle">Dashboard</p>
           <p class="page-sub" id="pageSub">Welcome back, {{ $employee->name }}</p>
         </div>
-        <div class="ms-auto d-flex align-items-center gap-2">
-          <div class="icon-btn" data-view="notifications"><i class="bi bi-bell"></i>@if($unreadNotifications > 0)<span class="dot"></span>@endif</div>
-          <a href="{{ route('employee.login') }}" class="btn btn-accent btn-sm">Back to Login</a>
+        <div class="ms-auto d-flex align-items-center gap-3">
+          <div class="icon-btn" data-view="notifications"><i class="bi bi-bell"></i>@if($unreadNotifications > 0)<span class="dot" id="topEmpNotifDot"></span>@endif</div>
+          <div class="user-menu">
+            <button class="user-menu-btn" id="userMenuBtn" type="button">
+              <img src="{{ $photo }}" alt="{{ $employee->name }}">
+              <span class="user-menu-name">{{ $employee->name }}</span>
+              <i class="bi bi-chevron-down small"></i>
+            </button>
+            <div class="user-menu-dropdown" id="userMenuDropdown">
+              <div class="user-menu-head">
+                <img src="{{ $photo }}" alt="{{ $employee->name }}">
+                <div>
+                  <div class="fw-semibold" style="font-size:.86rem;">{{ $employee->name }}</div>
+                  <div class="small" style="color:var(--text-soft);">{{ $employee->employee_id }}@if($employee->designation) &middot; {{ $employee->designation }}@endif</div>
+                </div>
+              </div>
+              <a href="{{ route('employee.login') }}" class="user-menu-item logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -750,12 +829,29 @@
       $btn.prop('disabled', true);
       $.post('{{ route("employee.notifications.read") }}', { employee_id: '{{ $employee->employee_id }}' })
         .done(function () {
-          location.reload();
+          $('.notif-item').removeClass('unread');
+          $('#notifBadge').hide();
+          $('#topEmpNotifDot').remove();
+          $btn.remove();
         })
         .fail(function () {
           $btn.prop('disabled', false);
           alert('Failed to mark notifications as read.');
         });
+    });
+
+    /* ---------------- User menu dropdown ---------------- */
+    $('#userMenuBtn').on('click', function (e) {
+      e.stopPropagation();
+      $('#userMenuDropdown').toggleClass('open');
+    });
+    $(document).on('click', function (e) {
+      if (!$(e.target).closest('.user-menu').length) {
+        $('#userMenuDropdown').removeClass('open');
+      }
+    });
+    $(document).on('keydown', function (e) {
+      if (e.key === 'Escape') $('#userMenuDropdown').removeClass('open');
     });
   </script>
 

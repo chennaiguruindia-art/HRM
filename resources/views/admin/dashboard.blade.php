@@ -1009,7 +1009,7 @@
           <div class="section-card">
             <div class="section-head">
               <h5>Notification Center</h5>
-              <button class="btn btn-ghost btn-sm ms-auto" id="markAllReadBtn">Mark all as read</button>
+              <button type="button" class="btn btn-ghost btn-sm ms-auto" id="markAllReadBtn">Mark all as read</button>
             </div>
             <div id="notifList"></div>
           </div>
@@ -1406,7 +1406,7 @@
       if (viewName === "attendance") loadAttendance();
       if (viewName === "leave") loadLeave();
       if (viewName === "designation") loadDesignations();
-      if (viewName === "notifications") loadNotifications();
+      if (viewName === "notifications") { loadNotifications(); loadNotifTargets(); }
       if (viewName === "salary") loadSalaryCalculations();
       if (viewName === "holidays") loadHolidays();
     }
@@ -1990,23 +1990,40 @@
       $("#topNotifDot").toggle(unread > 0);
     }
     $("#markAllReadBtn").on("click", function() {
+      var $btn = $(this);
+      $btn.prop("disabled", true);
       apiPost(API.markRead, {
         all: true
       }).then(function() {
+        $btn.prop("disabled", false);
         loadNotifications();
+      }).fail(function() {
+        $btn.prop("disabled", false);
       });
     });
 
     /* ---------------- Send notification ---------------- */
     let notifEmployeeOptions = [];
+    let notifTargetsLoaded = false;
 
     function loadNotifTargets() {
+      if (notifTargetsLoaded) return;
       apiGet(API.employees).then(function(rows) {
         notifEmployeeOptions = rows || [];
-        $("#notifTarget").html('<option value="all">All Employees</option>' + notifEmployeeOptions.map(function(e) {
-          return "<option value='" + e.id + "'>" + e.id + " - " + e.name + "</option>";
-        }).join(""));
+        notifTargetsLoaded = true;
+        renderNotifTargets();
       });
+    }
+
+    function renderNotifTargets() {
+      const allLabel = notifEmployeeOptions.length
+        ? "All Employees (" + notifEmployeeOptions.length + ")"
+        : "All Employees";
+      const options = notifEmployeeOptions.map(function(e) {
+        return "<option value='" + e.id + "'>" + e.name + " (" + e.id + ")</option>";
+      }).join("");
+      $("#notifTarget").html('<option value="all">' + allLabel + '</option>' +
+        '<optgroup label="Individual employees">' + options + '</optgroup>');
     }
 
     $("#sendNotifForm").on("submit", function(e) {
@@ -2041,12 +2058,6 @@
         btn.prop("disabled", false);
       });
     });
-
-    const origNotifLoad = loadNotifications;
-    function loadNotifications() {
-      origNotifLoad();
-      if (!$("#notifTarget option[value!='all']").length) loadNotifTargets();
-    }
 
     /* =========================================================================
        SALARY CALCULATIONS
@@ -2284,6 +2295,7 @@
       loadDashboard();
       loadLeave();
       loadNotifications();
+      loadNotifTargets();
       loadBranches();
       apiGet(API.designations).then(function(rows) {
         designationsCache = rows || [];
