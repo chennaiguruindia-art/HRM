@@ -379,12 +379,12 @@
       navigator.geolocation.getCurrentPosition(function(pos) {
         currentLat = pos.coords.latitude;
         currentLng = pos.coords.longitude;
-        $.get('https://nominatim.openstreetmap.org/reverse', {
+        $.post("{{ route('employee.address-from-coords') }}", {
           lat: currentLat,
-          lon: currentLng,
-          format: 'json'
+          lng: currentLng,
+          _token: "{{ csrf_token() }}"
         }).done(function(resp) {
-          currentLocationName = resp.display_name || '';
+          currentLocationName = resp.address || '';
         }).fail(function() {
           currentLocationName = '';
         });

@@ -1234,11 +1234,11 @@
             <div class="row">
               <div class="col-md-4 mb-3">
                 <label class="form-label small">Shift Start</label>
-                <input required type="time" class="form-control" name="shiftStart" value="09:00">
+                <input required type="time" class="form-control" name="shiftStart" value="09:30">
               </div>
               <div class="col-md-4 mb-3">
                 <label class="form-label small">Shift End</label>
-                <input required type="time" class="form-control" name="shiftEnd" value="18:00">
+                <input required type="time" class="form-control" name="shiftEnd" value="18:30">
               </div>
               <div class="col-md-4 mb-3">
                 <label class="form-label small">Gender</label>

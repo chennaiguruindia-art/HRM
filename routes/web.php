@@ -53,6 +53,7 @@ Route::prefix('employee')->name('employee.')->group(function () {
     Route::get('/dashboard/{employee_id}', [App\Http\Controllers\EmployeeController::class, 'dashboard'])->name('dashboard');
     Route::post('/logout', [App\Http\Controllers\EmployeeController::class, 'logout'])->name('logout');
     Route::post('/lookup', [App\Http\Controllers\EmployeeController::class, 'lookup'])->name('lookup');
+    Route::post('/address-from-coords', [App\Http\Controllers\EmployeeController::class, 'addressFromCoords'])->name('address-from-coords');
     Route::post('/clock-in', [App\Http\Controllers\EmployeeController::class, 'clockIn'])->name('clock-in');
     Route::post('/clock-out', [App\Http\Controllers\EmployeeController::class, 'clockOut'])->name('clock-out');
     Route::post('/leave', [App\Http\Controllers\EmployeeController::class, 'storeLeaveRequest'])->name('leave');

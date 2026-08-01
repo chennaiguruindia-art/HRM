@@ -8,6 +8,7 @@ use App\Models\LeaveRequest;
 use App\Models\Notification;
 use App\Models\SalaryCalculation;
 use App\Models\User;
+use App\Services\FreeGeocodingService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -354,5 +355,19 @@ class EmployeeController extends Controller
         $request->session()->forget('employee_id');
 
         return redirect('/');
+    }
+
+    public function addressFromCoords(Request $request, FreeGeocodingService $geocoder): JsonResponse
+    {
+        $data = $request->validate([
+            'lat' => 'required|numeric|between:-90,90',
+            'lng' => 'required|numeric|between:-180,180',
+        ]);
+
+        $address = $geocoder->getAddressFromCoords((float)$data['lat'], (float)$data['lng']);
+
+        return response()->json([
+            'address' => $address,
+        ]);
     }
 }
