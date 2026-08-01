@@ -3,8 +3,14 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="theme-color" content="#0a8577">
+  <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+  <link rel="apple-touch-icon" href="{{ asset('pwa/icons/icon-192.png') }}">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Employee Attendance - Guru Group</title>
   <link rel="icon" type="image/png" href="{{ asset('logo/guru.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,12 +30,19 @@
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #0f1225 0%, #1a2340 50%, #0f1225 100%);
+      background-attachment: fixed;
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
+      /* fallback for old browsers */
+      min-height: 100svh;
+      /* small viewport height: excludes browser UI */
+      min-height: 100dvh;
+      /* dynamic viewport height: tracks address-bar show/hide */
       padding: 20px;
+      overflow-x: hidden;
     }
 
     .card {
@@ -41,6 +54,7 @@
       width: 100%;
       max-width: 440px;
       text-align: center;
+      margin: auto;
     }
 
     .brand {
@@ -96,6 +110,7 @@
 
     .input-group input {
       flex: 1;
+      min-width: 0;
       padding: 10px 14px;
       border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, .12);
@@ -316,6 +331,31 @@
     .hours-badge.show {
       display: block;
     }
+
+    /* Smaller phones / short viewports: tighten spacing so nothing feels
+       like it's floating in a huge empty gradient */
+    @media (max-width: 420px) {
+      .card {
+        padding: 28px 22px;
+        border-radius: 16px;
+      }
+
+      .clock-time {
+        font-size: 2.1rem;
+        letter-spacing: 2px;
+      }
+
+      .clock-wrap {
+        margin: 16px 0 20px;
+      }
+    }
+
+    @media (max-height: 700px) {
+      body {
+        align-items: flex-start;
+        padding-top: 40px;
+      }
+    }
   </style>
 </head>
 
@@ -470,7 +510,7 @@
           showMsg('Clocked in at ' + att.check_in + '. Ready for clock out.', 'info');
         }
       }).fail(function(xhr) {
-        const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Employee not found.';
+        const msg = xhr.responseJSON ? xhr.responseJSON.message : ('Request failed (HTTP ' + (xhr.status || 'network error') + ')');
         showMsg(msg, 'error');
       }).always(function() {
         $('#lookupBtn').prop('disabled', false);
@@ -537,6 +577,13 @@
         const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Clock Out failed.';
         showMsg(msg, 'error');
         $('#clockOutBtn').prop('disabled', false);
+      });
+    }
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register("{{ asset('sw.js') }}").catch(function() {});
       });
     }
   </script>

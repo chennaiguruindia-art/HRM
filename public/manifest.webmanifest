@@ -1,0 +1,32 @@
+{
+  "name": "Guru Group Attendance",
+  "short_name": "GuruAttend",
+  "description": "Employee attendance, leave and salary portal",
+  "start_url": "/employee/login",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0a8577",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/pwa/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

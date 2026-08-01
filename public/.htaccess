@@ -3,6 +3,10 @@
         Options -MultiViews -Indexes
     </IfModule>
 
+    # PWA manifest MIME type
+    AddType application/manifest+json .webmanifest
+    AddType application/javascript .js
+
     RewriteEngine On
 
     # Handle Authorization Header

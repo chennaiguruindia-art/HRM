@@ -212,7 +212,12 @@ class EmployeeController extends Controller
     {
         $request->validate(['employee_id' => 'required|string']);
 
-        $employee = Employee::with('branch')->where('employee_id', $request->employee_id)->first();
+        $id = strtoupper(trim($request->employee_id));
+
+        $employee = Employee::with('branch')
+            ->whereRaw('UPPER(employee_id) = ?', [$id])
+            ->orWhereRaw('UPPER(REPLACE(REPLACE(REPLACE(employee_id, "-", ""), " ", ""), "_", "")) = ?', [preg_replace('/[\s_\-]/', '', $id)])
+            ->first();
 
         if (!$employee) {
             return response()->json(['found' => false, 'message' => 'Employee not found.'], 404);

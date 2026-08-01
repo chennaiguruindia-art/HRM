@@ -5,6 +5,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="theme-color" content="#0a8577">
+  <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+  <link rel="apple-touch-icon" href="{{ asset('pwa/icons/icon-192.png') }}">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Employee Dashboard - Guru Group</title>
   <link rel="icon" type="image/png" href="{{ asset('logo/guru.png') }}">
 
@@ -1450,6 +1456,13 @@
     });
   </script>
 
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register("{{ asset('sw.js') }}").catch(function() {});
+      });
+    }
+  </script>
 </body>
 
 </html>
