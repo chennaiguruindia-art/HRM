@@ -731,6 +731,7 @@
         <div class="side-link active" data-view="dashboard"><i class="bi bi-grid-1x2-fill"></i> Dashboard</div>
         <div class="side-link" data-view="profile"><i class="bi bi-person-badge-fill"></i> Profile</div>
         <div class="side-link" data-view="attendance"><i class="bi bi-calendar2-check-fill"></i> Attendance</div>
+        <div class="side-link" data-view="reports"><i class="bi bi-file-earmark-bar-graph-fill"></i> Daily Reports</div>
         <div class="side-link" data-view="leave">
           <i class="bi bi-file-earmark-text-fill"></i> Leave / Permission
           <span class="badge-pill" id="leaveBadge">{{ $pendingLeaves->count() }}</span>
@@ -1023,7 +1024,40 @@
           </div>
         </section>
 
-        <!-- ================= LEAVE / PERMISSION VIEW ================= -->
+        <!-- ================= DAILY REPORTS VIEW ================= -->
+        <section class="view" id="view-reports">
+          <div class="section-card">
+            <div class="section-head">
+              <h5>My Daily Reports</h5>
+              <button class="btn btn-accent btn-sm ms-auto" onclick="downloadReportPdf()"><i class="bi bi-file-earmark-pdf-fill"></i> Download PDF</button>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+              <div class="btn-group btn-group-sm" id="reportPeriodGroup">
+                <button type="button" class="btn btn-outline-secondary active" data-period="all">All</button>
+                <button type="button" class="btn btn-outline-secondary" data-period="date">Date</button>
+                <button type="button" class="btn btn-outline-secondary" data-period="month">Month</button>
+              </div>
+              <div id="reportDateWrap" style="display:none;"><input type="date" id="reportDate" class="form-control form-control-sm" style="width:170px;"></div>
+              <div id="reportMonthWrap" style="display:none;"><input type="month" id="reportMonth" class="form-control form-control-sm" style="width:170px;"></div>
+            </div>
+            <div class="table-responsive">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Check In</th>
+                    <th>Check Out</th>
+                    <th>Hours</th>
+                    <th>Status</th>
+                    <th>Daily Report</th>
+                  </tr>
+                </thead>
+                <tbody id="reportBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <section class="view" id="view-leave">
           <div class="row g-3 mb-2">
             <div class="col-6 col-lg-3">
@@ -1305,6 +1339,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script>
     $.ajaxSetup({
       headers: {
@@ -1316,6 +1351,7 @@
       dashboard: ['Dashboard', 'Overview of your attendance and leaves'],
       profile: ['Profile', 'Your personal and employment details'],
       attendance: ['Attendance', 'Your attendance history'],
+      reports: ['Daily Reports', 'Your daily work reports'],
       leave: ['Leave / Permission', 'Apply for leaves and track requests'],
       notifications: ['Notifications', 'Updates and announcements'],
       salary: ['Salary', 'Monthly salary calculation']
@@ -1331,11 +1367,99 @@
       $('#pageSub').text(meta[1]);
       $('#sidebar').removeClass('open');
       $('#sidebarOverlay').removeClass('show');
+      if (name === 'reports') loadEmpReports();
     }
 
     $(document).on('click', '.side-link[data-view]', function() {
       switchView($(this).data('view'));
     });
+
+    /* ---------------- Daily Reports ---------------- */
+    function empReportPill(status) {
+      var cls = 'pill-coral';
+      if (status === 'Present') cls = 'pill-teal';
+      else if (status === 'Half-day') cls = 'pill-amber';
+      else if (status === 'On Leave' || status === 'Holiday') cls = 'pill-indigo';
+      return '<span class="pill ' + cls + '">' + status + '</span>';
+    }
+
+    function loadEmpReports() {
+      var $body = $('#reportBody');
+      $body.html('<tr><td colspan="6" style="color:var(--text-soft);padding:24px;text-align:center;">Loading reports...</td></tr>');
+      var period = $('#reportPeriodGroup .btn.active').data('period');
+      var url = '{{ route("employee.reports.daily") }}';
+      var params = [];
+      if (period === 'date' && $('#reportDate').val()) params.push('date=' + encodeURIComponent($('#reportDate').val()));
+      if (period === 'month' && $('#reportMonth').val()) params.push('month=' + encodeURIComponent($('#reportMonth').val()));
+      if (params.length) url += '?' + params.join('&');
+
+      $.get(url).done(function(rows) {
+        if (!rows || !rows.length) {
+          $body.html('<tr><td colspan="6" style="color:var(--text-soft);padding:24px;text-align:center;">No reports found for the selected period.</td></tr>');
+          return;
+        }
+        $body.html(rows.map(function(r) {
+          return '<tr>' +
+            '<td class="mono">' + r.date + '</td>' +
+            '<td class="mono">' + r.check_in + '</td>' +
+            '<td class="mono">' + r.check_out + '</td>' +
+            '<td class="mono">' + r.hours + '</td>' +
+            '<td>' + empReportPill(r.status) + '</td>' +
+            '<td style="white-space:normal;">' + (r.report ? r.report : '—') + '</td>' +
+            '</tr>';
+        }).join(''));
+      }).fail(function() {
+        $body.html('<tr><td colspan="6" style="color:var(--text-soft);padding:24px;text-align:center;">Failed to load reports.</td></tr>');
+      });
+    }
+
+    $('#reportPeriodGroup .btn').on('click', function() {
+      $('#reportPeriodGroup .btn').removeClass('active');
+      $(this).addClass('active');
+      var period = $(this).data('period');
+      $('#reportDateWrap').toggle(period === 'date');
+      $('#reportMonthWrap').toggle(period === 'month');
+      loadEmpReports();
+    });
+    $('#reportDate, #reportMonth').on('change', loadEmpReports);
+
+    function downloadReportPdf() {
+      var $body = $('#reportBody');
+      var bodyHtml = $body.html();
+      if (!bodyHtml || bodyHtml.indexOf('No reports') > -1) {
+        alert('No report data to download.');
+        return;
+      }
+      var period = 'All records';
+      if ($('#reportPeriodGroup .btn.active').data('period') === 'date') period = 'Date: ' + $('#reportDate').val();
+      else if ($('#reportPeriodGroup .btn.active').data('period') === 'month') period = 'Month: ' + $('#reportMonth').val();
+
+      var title = 'Daily Report - {{ $employee->name }} ({{ $employee->employee_id }})';
+      var cleanRows = bodyHtml.replace(/<span class="pill[^"]*">(.*?)<\/span>/g, '$1');
+
+      var $el = $('<div style="padding:24px;font-family:Helvetica,Arial,sans-serif;color:#111;">' +
+        '<h2 style="margin:0 0 2px;color:#0a8577;">Guru Group Attendance</h2>' +
+        '<p style="margin:0 0 14px;color:#555;font-size:12px;">' + title + '<br>' + period + '</p>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:11px;">' +
+        '<thead><tr style="background:#0fb5a3;color:#fff;">' +
+        '<th style="padding:6px;border:1px solid #cfd2dd;text-align:left;">Date</th>' +
+        '<th style="padding:6px;border:1px solid #cfd2dd;text-align:left;">Check In</th>' +
+        '<th style="padding:6px;border:1px solid #cfd2dd;text-align:left;">Check Out</th>' +
+        '<th style="padding:6px;border:1px solid #cfd2dd;text-align:left;">Hours</th>' +
+        '<th style="padding:6px;border:1px solid #cfd2dd;text-align:left;">Status</th>' +
+        '<th style="padding:6px;border:1px solid #cfd2dd;text-align:left;">Daily Report</th>' +
+        '</tr></thead><tbody>' + cleanRows + '</tbody></table></div>').appendTo('body');
+
+      html2pdf().set({
+        margin: [10, 10, 10, 10],
+        filename: 'daily-report-{{ $employee->employee_id }}.pdf',
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from($el[0]).save().then(function() {
+        $el.remove();
+      });
+    }
 
     $('#burgerBtn').on('click', function() {
       $('#sidebar').addClass('open');

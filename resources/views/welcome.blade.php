@@ -212,20 +212,20 @@
               <circle cx="12" cy="7" r="4" />
             </svg>
           </div>
-          <h3>Employee Portal</h3>
+          <h3>Attendance Login</h3>
           <p>Mark attendance &amp; view your records</p>
-          <a href="{{ route('employee.login') }}" class="btn btn-employee">Employee Login</a>
+          <a href="{{ route('employee.login') }}" class="btn btn-employee">Attendance Login</a>
         </div>
 
-        <div class="portal-card" data-href="{{ route('login') }}?admin=1">
+        <div class="portal-card" data-href="{{ route('reports.login') }}">
           <div class="icon" style="background:rgba(79,91,213,.18);color:#4f5bd5;">
             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
           </div>
-          <h3>Admin Portal</h3>
-          <p>Manage employees, reports &amp; settings</p>
-          <a href="{{ route('login') }}" class="btn btn-admin">Admin Login</a>
+          <h3>Reports Login</h3>
+          <p>Branch-wise attendance, reports &amp; management</p>
+          <a href="{{ route('reports.login') }}" class="btn btn-admin">Reports Login</a>
         </div>
       </div>
     </div>

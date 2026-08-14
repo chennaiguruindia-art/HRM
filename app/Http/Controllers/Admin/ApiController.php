@@ -21,17 +21,72 @@ class ApiController extends Controller
     const SHIFT_START = '09:30';
     const SHIFT_END = '18:30';
 
+    private function branchScope(): ?int
+    {
+        $user = auth()->user();
+
+        return $user && $user->branch_id ? (int) $user->branch_id : null;
+    }
+
+    private function branchEmployeeIds(): ?array
+    {
+        $branchId = $this->branchScope();
+
+        if (!$branchId) {
+            return null;
+        }
+
+        return Employee::where('branch_id', $branchId)->pluck('employee_id')->all();
+    }
+
+    private function branchEmployeeModelIds(): ?array
+    {
+        $branchId = $this->branchScope();
+
+        if (!$branchId) {
+            return null;
+        }
+
+        return Employee::where('branch_id', $branchId)->pluck('id')->all();
+    }
+
+    private function ensureBranchAccess(Employee $employee): void
+    {
+        $branchId = $this->branchScope();
+
+        if ($branchId && (int) $employee->branch_id !== $branchId) {
+            abort(403, 'You can only manage employees in your branch.');
+        }
+    }
+
+    private function denyBranchAdmin(): void
+    {
+        if ($this->branchScope()) {
+            abort(403, 'Branch admins are not allowed to perform this action.');
+        }
+    }
+
     public function dashboardStats(): JsonResponse
     {
-        $total = Employee::count();
+        $branchId = $this->branchScope();
+        $empIds = $this->branchEmployeeIds();
+
+        $total = Employee::query()->when($branchId, fn ($q) => $q->where('branch_id', $branchId))->count();
         $today = Carbon::today();
-        $presentToday = Attendance::whereDate('date', $today)->where('status', 'present')->count();
-        $absent = Attendance::whereDate('date', $today)->where('status', 'absent')->count();
+        $presentToday = Attendance::whereDate('date', $today)->where('status', 'present')
+            ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
+            ->count();
+        $absent = Attendance::whereDate('date', $today)->where('status', 'absent')
+            ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
+            ->count();
         $onLeave = LeaveRequest::where('status', 'Approved')
             ->whereDate('from_date', '<=', $today)
             ->whereDate('to_date', '>=', $today)
+            ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
             ->count();
-        $pending = LeaveRequest::where('status', 'Pending')->count();
+        $pending = LeaveRequest::where('status', 'Pending')
+            ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
+            ->count();
 
         return response()->json([
             'total' => $total ?: 0,
@@ -44,7 +99,10 @@ class ApiController extends Controller
 
     public function employees(): JsonResponse
     {
-        $employees = Employee::with('branch')->get()->map(function ($e) {
+        $branchId = $this->branchScope();
+        $employees = Employee::with('branch')
+            ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
+            ->get()->map(function ($e) {
             $img = $e->photo
                 ? asset('employee_profile_pic/' . $e->photo)
                 : 'https://i.pravatar.cc/64?img=' . ($e->id % 60);
@@ -100,6 +158,11 @@ class ApiController extends Controller
             $branchId = $branch->id;
         }
 
+        $scopedBranchId = $this->branchScope();
+        if ($scopedBranchId) {
+            $branchId = $scopedBranchId;
+        }
+
         if (!empty($data['designation'])) {
             Designation::firstOrCreate(['title' => $data['designation']], ['department' => 'General']);
         }
@@ -136,6 +199,7 @@ class ApiController extends Controller
     {
         $empId = $request->id ?? $request->employee_id;
         $employee = Employee::where('employee_id', $empId)->firstOrFail();
+        $this->ensureBranchAccess($employee);
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
@@ -156,6 +220,11 @@ class ApiController extends Controller
         if (!empty($data['branch'])) {
             $branch = Branch::firstOrCreate(['name' => $data['branch']]);
             $branchId = $branch->id;
+        }
+
+        $scopedBranchId = $this->branchScope();
+        if ($scopedBranchId) {
+            $branchId = $scopedBranchId;
         }
 
         if (!empty($data['designation'])) {
@@ -190,7 +259,9 @@ class ApiController extends Controller
 
     public function deleteEmployee(Request $request): JsonResponse
     {
-        Employee::where('employee_id', $request->id)->delete();
+        $employee = Employee::where('employee_id', $request->id)->firstOrFail();
+        $this->ensureBranchAccess($employee);
+        $employee->delete();
         return response()->json(['success' => true]);
     }
 
@@ -202,6 +273,7 @@ class ApiController extends Controller
         ]);
 
         $employee = Employee::where('employee_id', $request->employee_id)->firstOrFail();
+        $this->ensureBranchAccess($employee);
         $employee->update(['status' => $request->status]);
 
         return response()->json(['success' => true, 'status' => $employee->status]);
@@ -209,22 +281,27 @@ class ApiController extends Controller
 
     public function branches(): JsonResponse
     {
-        $branches = Branch::withCount('employees')->get()->map(function ($b) {
-            return [
-                'id' => 'BR-' . str_pad($b->id, 2, '0', STR_PAD_LEFT),
-                'name' => $b->name,
-                'location' => $b->location ?? '',
-                'manager' => $b->manager ?? '',
-                'phone' => $b->phone ?? '',
-                'employees' => $b->employees_count,
-            ];
-        });
+        $branchId = $this->branchScope();
+        $branches = Branch::withCount('employees')
+            ->when($branchId, fn ($q) => $q->where('id', $branchId))
+            ->get()->map(function ($b) {
+                return [
+                    'id' => 'BR-' . str_pad($b->id, 2, '0', STR_PAD_LEFT),
+                    'name' => $b->name,
+                    'location' => $b->location ?? '',
+                    'manager' => $b->manager ?? '',
+                    'phone' => $b->phone ?? '',
+                    'employees' => $b->employees_count,
+                ];
+            });
 
         return response()->json($branches);
     }
 
     public function storeBranch(Request $request): JsonResponse
     {
+        $this->denyBranchAdmin();
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'location' => 'nullable|string|max:255',
@@ -239,6 +316,8 @@ class ApiController extends Controller
 
     public function deleteBranch(Request $request): JsonResponse
     {
+        $this->denyBranchAdmin();
+
         $id = (int) str_replace('BR-', '', $request->id);
         Branch::where('id', $id)->delete();
         return response()->json(['success' => true]);
@@ -247,7 +326,11 @@ class ApiController extends Controller
     public function attendance(Request $request): JsonResponse
     {
         $period = $request->period ?? 'daily';
-        $employees = Employee::with('branch')->get();
+        $branchId = $this->branchScope();
+        $empIds = $this->branchEmployeeIds();
+        $employees = Employee::with('branch')
+            ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
+            ->get();
 
         if ($period === 'daily') {
             $today = Carbon::today();
@@ -255,7 +338,10 @@ class ApiController extends Controller
                 $today = Carbon::parse($request->date)->startOfDay();
             }
             $isHoliday = Holiday::whereDate('date', $today)->exists();
-            $records = Attendance::with('user')->whereDate('date', $today)->get();
+            $records = Attendance::with('user')
+                ->whereDate('date', $today)
+                ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
+                ->get();
             $result = $employees->map(function ($e) use ($records, $isHoliday, $today) {
                 $att = $records->firstWhere('user_id', $e->id) ?? $records->firstWhere('employee_id', $e->employee_id);
                 $status = $att ? ucfirst($att->status) : 'Absent';
@@ -326,6 +412,7 @@ class ApiController extends Controller
         ]);
 
         $employee = Employee::where('employee_id', $request->employee_id)->firstOrFail();
+        $this->ensureBranchAccess($employee);
         $date = Carbon::parse($request->date)->toDateString();
 
         $attendance = Attendance::where('employee_id', $employee->employee_id)
@@ -383,6 +470,46 @@ class ApiController extends Controller
         ]);
     }
 
+    public function dailyReports(Request $request): JsonResponse
+    {
+        $request->validate([
+            'employee_id' => 'required|string|exists:employees,employee_id',
+            'date' => 'nullable|date',
+            'month' => 'nullable|date_format:Y-m',
+        ]);
+
+        $query = Attendance::where('employee_id', $request->employee_id);
+        $employee = Employee::where('employee_id', $request->employee_id)->firstOrFail();
+        $this->ensureBranchAccess($employee);
+
+        if ($request->date) {
+            $query->whereDate('date', Carbon::parse($request->date));
+        } elseif ($request->month) {
+            $monthStart = Carbon::parse($request->month . '-01')->startOfMonth();
+            $monthEnd = $monthStart->copy()->endOfMonth();
+            $query->whereBetween('date', [$monthStart, $monthEnd]);
+        }
+
+        $records = $query->orderByDesc('date')->get()->map(function ($a) {
+            $hours = '--';
+            if ($a->check_in && $a->check_out) {
+                $minutes = Carbon::parse($a->check_in)->diffInMinutes(Carbon::parse($a->check_out));
+                $hours = intdiv($minutes, 60) . 'h ' . ($minutes % 60) . 'm';
+            }
+
+            return [
+                'date' => $a->date->toDateString(),
+                'check_in' => $a->check_in ? Carbon::parse($a->check_in)->format('h:i A') : '--',
+                'check_out' => $a->check_out ? Carbon::parse($a->check_out)->format('h:i A') : '--',
+                'hours' => $hours,
+                'status' => ucfirst($a->status),
+                'report' => $a->daily_report ?? '',
+            ];
+        });
+
+        return response()->json($records);
+    }
+
     private function attendanceStatus(Carbon $checkIn, ?Carbon $checkOut): string
     {
         if ($checkIn->format('H:i') >= '12:00') {
@@ -401,7 +528,10 @@ class ApiController extends Controller
 
     public function leaveRequests(): JsonResponse
     {
-        $leaves = LeaveRequest::with('user')->latest()->get()->map(function ($l) {
+        $empIds = $this->branchEmployeeIds();
+        $leaves = LeaveRequest::with('user')
+            ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
+            ->latest()->get()->map(function ($l) {
             $name = $l->user?->name;
             if (!$name && $l->employee_id) {
                 $name = Employee::where('employee_id', $l->employee_id)->value('name');
@@ -428,6 +558,12 @@ class ApiController extends Controller
         ]);
 
         $leave = LeaveRequest::with('user')->findOrFail($request->id);
+        if ($leave->employee_id) {
+            $leaveEmployee = Employee::where('employee_id', $leave->employee_id)->first();
+            if ($leaveEmployee) {
+                $this->ensureBranchAccess($leaveEmployee);
+            }
+        }
         $leave->update(['status' => $request->action]);
 
         if ($request->action === 'Approved') {
@@ -454,11 +590,14 @@ class ApiController extends Controller
 
     public function designations(): JsonResponse
     {
-        $designations = Designation::all()->map(function ($d) {
+        $branchId = $this->branchScope();
+        $designations = Designation::all()->map(function ($d) use ($branchId) {
             return [
                 'title' => $d->title,
                 'department' => $d->department,
-                'count' => Employee::where('designation', $d->title)->count(),
+                'count' => Employee::where('designation', $d->title)
+                    ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
+                    ->count(),
             ];
         });
 
@@ -479,24 +618,30 @@ class ApiController extends Controller
 
     public function notifications(): JsonResponse
     {
-        $notifications = Notification::latest()->get()->map(function ($n) {
-            return [
-                'id' => $n->id,
-                'title' => $n->title,
-                'body' => $n->body ?? '',
-                'time' => $n->created_at->diffForHumans(),
-                'icon' => $n->type ?? 'bi-bell-fill',
-                'color' => 'indigo',
-                'unread' => !$n->is_read,
-            ];
-        });
+        $empIds = $this->branchEmployeeIds();
+        $notifications = Notification::query()
+            ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
+            ->latest()->get()->map(function ($n) {
+                return [
+                    'id' => $n->id,
+                    'title' => $n->title,
+                    'body' => $n->body ?? '',
+                    'time' => $n->created_at->diffForHumans(),
+                    'icon' => $n->type ?? 'bi-bell-fill',
+                    'color' => 'indigo',
+                    'unread' => !$n->is_read,
+                ];
+            });
 
         return response()->json($notifications);
     }
 
     public function markRead(Request $request): JsonResponse
     {
-        Notification::where('is_read', false)->update(['is_read' => true]);
+        $empIds = $this->branchEmployeeIds();
+        Notification::where('is_read', false)
+            ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
+            ->update(['is_read' => true]);
         return response()->json(['success' => true]);
     }
 
@@ -510,9 +655,12 @@ class ApiController extends Controller
 
         $title = $request->title;
         $body = $request->body;
+        $branchId = $this->branchScope();
 
         if ($request->target === 'all') {
-            $employees = Employee::all();
+            $employees = Employee::query()
+                ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
+                ->get();
             foreach ($employees as $employee) {
                 $user = User::where('email', $employee->email)->first();
                 Notification::create([
@@ -536,6 +684,7 @@ class ApiController extends Controller
         if (!$employee) {
             return response()->json(['success' => false, 'message' => 'Employee not found.'], 404);
         }
+        $this->ensureBranchAccess($employee);
 
         $user = User::where('email', $employee->email)->first();
         Notification::create([
@@ -555,7 +704,10 @@ class ApiController extends Controller
 
     public function salaryCalculations(): JsonResponse
     {
-        $records = SalaryCalculation::with('employee')->latest()->get()->map(function ($s) {
+        $branchEmpIds = $this->branchEmployeeModelIds();
+        $records = SalaryCalculation::with('employee')
+            ->when($branchEmpIds !== null, fn ($q) => $q->whereIn('employee_id', $branchEmpIds))
+            ->latest()->get()->map(function ($s) {
             return [
                 'id' => $s->id,
                 'employee_id' => $s->employee->employee_id,
@@ -598,6 +750,7 @@ class ApiController extends Controller
         $data['month'] = $this->normalizeMonth($data['month']);
 
         $employee = Employee::where('employee_id', $data['employee_id'])->firstOrFail();
+        $this->ensureBranchAccess($employee);
         $baseSalary = $employee->salary ?? 0;
 
         [$year, $monthNum] = explode('-', $data['month']);
@@ -675,6 +828,7 @@ class ApiController extends Controller
         $data['month'] = $this->normalizeMonth($data['month']);
 
         $employee = Employee::where('employee_id', $data['employee_id'])->firstOrFail();
+        $this->ensureBranchAccess($employee);
 
         $baseSalary = $data['base_salary'] ?? $employee->salary;
         if (!$baseSalary) {

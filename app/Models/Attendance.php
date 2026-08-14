@@ -15,6 +15,7 @@ class Attendance extends Model
         'check_out',
         'status',
         'notes',
+        'daily_report',
         'latitude',
         'longitude',
         'location_name',

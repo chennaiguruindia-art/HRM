@@ -1,4 +1,4 @@
-const CACHE = 'guru-attendance-v2';
+const CACHE = 'guru-attendance-v3';
 const CORE = [
   '/',
   '/employee/login',
@@ -33,40 +33,26 @@ self.addEventListener('activate', function(e) {
 self.addEventListener('fetch', function(e) {
   if (e.request.method !== 'GET') return;
 
-  if (e.request.mode === 'navigate') {
-    e.respondWith(
-      fetch(e.request).then(function(res) {
-        const copy = res.clone();
+  var url;
+  try { url = new URL(e.request.url); } catch (err) { return; }
+  if (url.origin !== location.origin) return;
+
+  var isNavigation = e.request.mode === 'navigate';
+
+  e.respondWith(
+    fetch(e.request).then(function(res) {
+      if (res && res.ok) {
+        var copy = res.clone();
         caches.open(CACHE).then(function(cache) {
           cache.put(e.request, copy);
         });
-        return res;
-      }).catch(function() {
-        return caches.match(e.request).then(function(cached) {
-          return cached || caches.match('/');
-        });
-      })
-    );
-    return;
-  }
-
-  e.respondWith(
-    caches.match(e.request).then(function(cached) {
-      if (cached) return cached;
-
-      return fetch(e.request).then(function(res) {
-        if (res && res.ok) {
-          const url = new URL(e.request.url);
-          if (url.origin === location.origin) {
-            const copy = res.clone();
-            caches.open(CACHE).then(function(cache) {
-              cache.put(e.request, copy);
-            });
-          }
-        }
-        return res;
-      }).catch(function() {
-        return caches.match('/');
+      }
+      return res;
+    }).catch(function() {
+      return caches.match(e.request).then(function(cached) {
+        if (cached) return cached;
+        if (isNavigation) return caches.match('/');
+        return Response.error();
       });
     })
   );

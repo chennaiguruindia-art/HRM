@@ -300,6 +300,7 @@ class EmployeeController extends Controller
     {
         $request->validate([
             'employee_id' => 'required|string',
+            'daily_report' => 'required|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'location_name' => 'nullable|string|max:255',
@@ -340,6 +341,7 @@ class EmployeeController extends Controller
         $attendance->update([
             'check_out' => $now,
             'status' => $status,
+            'daily_report' => $request->daily_report,
             'latitude' => $request->latitude ?? $attendance->latitude,
             'longitude' => $request->longitude ?? $attendance->longitude,
             'location_name' => $request->location_name ?? $attendance->location_name,
@@ -360,6 +362,49 @@ class EmployeeController extends Controller
         $request->session()->forget('employee_id');
 
         return redirect('/');
+    }
+
+    public function dailyReports(Request $request): JsonResponse
+    {
+        $request->validate([
+            'date' => 'nullable|date',
+            'month' => 'nullable|date_format:Y-m',
+        ]);
+
+        $employeeId = $request->session()->get('employee_id');
+
+        if (!$employeeId) {
+            return response()->json(['success' => false, 'message' => 'Not logged in.'], 401);
+        }
+
+        $query = Attendance::where('employee_id', $employeeId);
+
+        if ($request->date) {
+            $query->whereDate('date', Carbon::parse($request->date));
+        } elseif ($request->month) {
+            $monthStart = Carbon::parse($request->month . '-01')->startOfMonth();
+            $monthEnd = $monthStart->copy()->endOfMonth();
+            $query->whereBetween('date', [$monthStart, $monthEnd]);
+        }
+
+        $records = $query->orderByDesc('date')->get()->map(function ($a) {
+            $hours = '--';
+            if ($a->check_in && $a->check_out) {
+                $minutes = Carbon::parse($a->check_in)->diffInMinutes(Carbon::parse($a->check_out));
+                $hours = intdiv($minutes, 60) . 'h ' . ($minutes % 60) . 'm';
+            }
+
+            return [
+                'date' => $a->date->toDateString(),
+                'check_in' => $a->check_in ? Carbon::parse($a->check_in)->format('h:i A') : '--',
+                'check_out' => $a->check_out ? Carbon::parse($a->check_out)->format('h:i A') : '--',
+                'hours' => $hours,
+                'status' => ucfirst($a->status),
+                'report' => $a->daily_report ?? '',
+            ];
+        });
+
+        return response()->json($records);
     }
 
     public function addressFromCoords(Request $request, FreeGeocodingService $geocoder): JsonResponse

@@ -7,9 +7,19 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::prefix('reports')->name('reports.')->middleware('guest')->group(function () {
+    Route::get('/login', [App\Http\Controllers\ReportsAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [App\Http\Controllers\ReportsAuthController::class, 'login']);
+});
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/{slug}admin/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->where('slug', '[a-z]+')
+    ->name('admin.branch-dashboard');
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
@@ -26,6 +36,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::post('/branches/delete', [App\Http\Controllers\Admin\ApiController::class, 'deleteBranch'])->name('branches.delete');
         Route::get('/attendance', [App\Http\Controllers\Admin\ApiController::class, 'attendance'])->name('attendance');
         Route::post('/attendance/update', [App\Http\Controllers\Admin\ApiController::class, 'updateAttendance'])->name('attendance.update');
+        Route::get('/reports/daily', [App\Http\Controllers\Admin\ApiController::class, 'dailyReports'])->name('reports.daily');
         Route::get('/leave-requests', [App\Http\Controllers\Admin\ApiController::class, 'leaveRequests'])->name('leave-requests');
         Route::post('/leave-action', [App\Http\Controllers\Admin\ApiController::class, 'leaveAction'])->name('leave-action');
         Route::get('/designations', [App\Http\Controllers\Admin\ApiController::class, 'designations'])->name('designations');
@@ -52,6 +63,7 @@ Route::prefix('employee')->name('employee.')->group(function () {
     Route::get('/login', [App\Http\Controllers\EmployeeController::class, 'login'])->name('login');
     Route::get('/dashboard/{employee_id}', [App\Http\Controllers\EmployeeController::class, 'dashboard'])->name('dashboard');
     Route::post('/logout', [App\Http\Controllers\EmployeeController::class, 'logout'])->name('logout');
+    Route::get('/reports/daily', [App\Http\Controllers\EmployeeController::class, 'dailyReports'])->name('reports.daily');
     Route::post('/lookup', [App\Http\Controllers\EmployeeController::class, 'lookup'])->name('lookup');
     Route::post('/address-from-coords', [App\Http\Controllers\EmployeeController::class, 'addressFromCoords'])->name('address-from-coords');
     Route::post('/clock-in', [App\Http\Controllers\EmployeeController::class, 'clockIn'])->name('clock-in');

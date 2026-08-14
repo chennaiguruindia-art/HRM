@@ -24,6 +24,7 @@ Route::prefix('admin')->name('api.admin.')->group(function () {
     Route::post('/branches/delete', [App\Http\Controllers\Admin\ApiController::class, 'deleteBranch'])->name('branches.delete');
     Route::get('/attendance', [App\Http\Controllers\Admin\ApiController::class, 'attendance'])->name('attendance');
     Route::post('/attendance/update', [App\Http\Controllers\Admin\ApiController::class, 'updateAttendance'])->name('attendance.update');
+    Route::get('/reports/daily', [App\Http\Controllers\Admin\ApiController::class, 'dailyReports'])->name('reports.daily');
     Route::get('/leave-requests', [App\Http\Controllers\Admin\ApiController::class, 'leaveRequests'])->name('leave-requests');
     Route::post('/leave-action', [App\Http\Controllers\Admin\ApiController::class, 'leaveAction'])->name('leave-action');
     Route::get('/designations', [App\Http\Controllers\Admin\ApiController::class, 'designations'])->name('designations');
@@ -43,6 +44,7 @@ Route::prefix('employee')->name('api.employee.')->group(function () {
     Route::post('/lookup', [App\Http\Controllers\EmployeeController::class, 'lookup'])->name('lookup');
     Route::get('/dashboard/{employee_id}', [App\Http\Controllers\EmployeeController::class, 'dashboard'])->name('dashboard');
     Route::post('/logout', [App\Http\Controllers\EmployeeController::class, 'logout'])->name('logout');
+    Route::get('/reports/daily', [App\Http\Controllers\EmployeeController::class, 'dailyReports'])->name('reports.daily');
     Route::post('/clock-in', [App\Http\Controllers\EmployeeController::class, 'clockIn'])->name('clock-in');
     Route::post('/clock-out', [App\Http\Controllers\EmployeeController::class, 'clockOut'])->name('clock-out');
     Route::post('/leave', [App\Http\Controllers\EmployeeController::class, 'storeLeaveRequest'])->name('leave');

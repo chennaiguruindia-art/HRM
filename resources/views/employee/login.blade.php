@@ -332,6 +332,64 @@
       display: block;
     }
 
+    /* Daily report modal for clock out */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 12, 25, .75);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-panel {
+      background: #1a2340;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 16px;
+      padding: 22px;
+      width: 100%;
+      max-width: 460px;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: #9499b5;
+      font-size: 1.2rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .15);
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: .85rem;
+      cursor: pointer;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, .14);
+    }
+
     /* Smaller phones / short viewports: tighten spacing so nothing feels
        like it's floating in a huge empty gradient */
     @media (max-width: 420px) {
@@ -397,6 +455,22 @@
     <div class="hours-badge" id="hoursBadge"></div>
 
     <div class="msg" id="msg"></div>
+
+    <div class="modal-overlay" id="reportModal">
+      <div class="modal-panel">
+        <div class="modal-head">
+          <h6 class="mb-0">Daily Report</h6>
+          <button type="button" class="modal-close" id="reportModalClose">&times;</button>
+        </div>
+        <p style="color:#9499b5;font-size:.8rem;margin-bottom:12px;">Please enter today's work report to complete clock out.</p>
+        <textarea id="dailyReportInput" rows="4" placeholder="Describe what you worked on today..." style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-family:inherit;font-size:.9rem;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+        <div id="reportModalMsg" style="margin-top:8px;font-size:.8rem;color:#ef5d6f;display:none;">Daily report is required before clock out.</div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+          <button type="button" class="btn btn-ghost" id="reportModalCancel">Cancel</button>
+          <button type="button" class="btn btn-clock-out" id="reportConfirmBtn">Confirm Clock Out</button>
+        </div>
+      </div>
+    </div>
 
     <a href="/" class="back-link" id="dashLink"> Employee dashboard &rarr;</a>
   </div>
@@ -550,12 +624,38 @@
 
     function doClockOut() {
       if (!currentEmployeeId) return;
+      $('#reportModalMsg').hide();
+      $('#dailyReportInput').val('');
+      $('#reportModal').addClass('show');
+    }
+
+    $('#reportModalClose, #reportModalCancel').on('click', function() {
+      $('#reportModal').removeClass('show');
+    });
+
+    $('#reportModal').on('click', function(e) {
+      if (e.target === this) $('#reportModal').removeClass('show');
+    });
+
+    $('#reportConfirmBtn').on('click', function() {
+      const report = $('#dailyReportInput').val().trim();
+      if (!report) {
+        $('#reportModalMsg').show();
+        return;
+      }
+      $('#reportModal').removeClass('show');
+      submitClockOut(report);
+    });
+
+    function submitClockOut(report) {
+      if (!currentEmployeeId) return;
       $('#clockInBtn').prop('disabled', true);
       $('#clockOutBtn').prop('disabled', true);
       $('#msg').hide().removeClass('success error info');
 
       const data = {
-        employee_id: currentEmployeeId
+        employee_id: currentEmployeeId,
+        daily_report: report
       };
       if (currentLat && currentLng) {
         data.latitude = currentLat;

@@ -383,6 +383,12 @@
       background: var(--surface);
     }
 
+    table.tbl td.report-text {
+      white-space: normal;
+      min-width: 260px;
+      line-height: 1.5;
+    }
+
     .pill {
       display: inline-flex;
       align-items: center;
@@ -628,6 +634,7 @@
 </head>
 
 <body>
+  @php $isBranchAdmin = !empty($branch); @endphp
 
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -643,22 +650,23 @@
         <div class="side-link active" data-view="dashboard">
           <i class="bi bi-grid-1x2-fill"></i> Dashboard
         </div>
+        @if ($isBranchAdmin)
         <div class="side-link" data-view="employees">
           <i class="bi bi-people-fill"></i> Employees
         </div>
+        @endif
         <div class="side-link" data-view="employee-list">
           <i class="bi bi-person-lines-fill"></i> Employee List
-        </div>
-        <div class="side-link" data-view="branches">
-          <i class="bi bi-building-fill"></i> Branches
         </div>
         <div class="side-link" data-view="attendance">
           <i class="bi bi-calendar2-check-fill"></i> Attendance
         </div>
+        @if ($isBranchAdmin)
         <div class="side-link" data-view="leave">
           <i class="bi bi-file-earmark-text-fill"></i> Leave / Permission
           <span class="badge-pill" id="leaveBadge">0</span>
         </div>
+        @endif
         <div class="side-link" data-view="designation">
           <i class="bi bi-diagram-3-fill"></i> Designation List
         </div>
@@ -666,11 +674,16 @@
           <i class="bi bi-bell-fill"></i> Notifications
           <span class="badge-pill" id="notifBadge">0</span>
         </div>
+        @if ($isBranchAdmin)
         <div class="side-link" data-view="salary">
           <i class="bi bi-cash-stack"></i> Salary
         </div>
         <div class="side-link" data-view="holidays">
           <i class="bi bi-calendar-heart-fill"></i> Holidays
+        </div>
+        @endif
+        <div class="side-link" data-view="reports">
+          <i class="bi bi-file-earmark-bar-graph-fill"></i> Daily Reports
         </div>
 
         <div class="nav-label">Session</div>
@@ -683,7 +696,7 @@
         <img src="{{ asset('logo/guru.png') }}" alt="Guru Group">
         <div>
           <div class="name">Guru Group</div>
-          <div class="role">Super Admin</div>
+          <div class="role">{{ $isBranchAdmin ? $branch->name . ' Admin' : 'Super Admin' }}</div>
         </div>
       </div>
     </aside>
@@ -800,6 +813,7 @@
         </section>
 
         <!-- ================= EMPLOYEES VIEW ================= -->
+        @if ($isBranchAdmin)
         <section class="view" id="view-employees">
           <div class="section-card">
             <div class="section-head">
@@ -831,6 +845,7 @@
             </div>
           </div>
         </section>
+        @endif
 
         <!-- ================= EMPLOYEE LIST VIEW ================= -->
         <section class="view" id="view-employee-list">
@@ -863,32 +878,6 @@
                   </tr>
                 </thead>
                 <tbody id="employeeListBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <!-- ================= BRANCHES VIEW ================= -->
-        <section class="view" id="view-branches">
-          <div class="section-card">
-            <div class="section-head">
-              <h5>Branches</h5>
-              <button class="btn btn-accent btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#branchModal"><i class="bi bi-plus-lg"></i> Add Branch</button>
-            </div>
-            <div class="table-responsive">
-              <table class="tbl">
-                <thead>
-                  <tr>
-                    <th>Branch ID</th>
-                    <th>Branch Name</th>
-                    <th>Location</th>
-                    <th>Manager</th>
-                    <th>Contact</th>
-                    <th>Employees</th>
-                    <th class="text-end">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="branchesBody"></tbody>
               </table>
             </div>
           </div>
@@ -930,6 +919,7 @@
         </section>
 
         <!-- ================= LEAVE / PERMISSION VIEW ================= -->
+        @if ($isBranchAdmin)
         <section class="view" id="view-leave">
           <div class="section-card">
             <div class="section-head">
@@ -959,6 +949,7 @@
             </div>
           </div>
         </section>
+        @endif
 
         <!-- ================= DESIGNATION LIST VIEW ================= -->
         <section class="view" id="view-designation">
@@ -1021,6 +1012,7 @@
         </section>
 
         <!-- ================= SALARY VIEW ================= -->
+        @if ($isBranchAdmin)
         <section class="view" id="view-salary">
           <div class="section-card">
             <div class="section-head">
@@ -1070,12 +1062,88 @@
             </div>
           </div>
         </section>
+        @endif
+
+        <!-- ================= DAILY REPORTS VIEW ================= -->
+        <section class="view" id="view-reports">
+          <div class="section-card">
+            <div class="section-head">
+              <h5>Daily Reports</h5>
+              <select class="form-select form-select-sm ms-auto" id="reportBranchFilter" style="width: 220px;">
+                <option value="">All Branches</option>
+              </select>
+            </div>
+            <div class="table-responsive">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Employee</th>
+                    <th>Designation</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="reportEmployeesBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
 
       </main>
     </div>
   </div>
 
+  <!-- ============ Daily Report Modal ============ -->
+  <div class="modal fade" id="dailyReportModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="dailyReportTitle">Daily Report</h5>
+          <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-accent btn-sm" onclick="downloadAdminReportPdf()"><i class="bi bi-file-earmark-pdf-fill"></i> Download PDF</button>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2 mb-3 align-items-center">
+            <div class="col-md-auto">
+              <div class="btn-group btn-group-sm" role="group" id="reportPeriodGroup">
+                <button type="button" class="btn btn-outline-secondary active" data-period="all">All</button>
+                <button type="button" class="btn btn-outline-secondary" data-period="date">Date</button>
+                <button type="button" class="btn btn-outline-secondary" data-period="month">Month</button>
+              </div>
+            </div>
+            <div class="col-md-auto" id="reportDateWrap" style="display: none;">
+              <input type="date" class="form-control form-control-sm" id="reportDate" style="width: 170px;">
+            </div>
+            <div class="col-md-auto" id="reportMonthWrap" style="display: none;">
+              <input type="month" class="form-control form-control-sm" id="reportMonth" style="width: 170px;">
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                  <th>Hours</th>
+                  <th>Status</th>
+                  <th>Daily Report</th>
+                </tr>
+              </thead>
+              <tbody id="dailyReportBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ Salary Modal ============ -->
+  @if ($isBranchAdmin)
   <div class="modal fade" id="salaryModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1153,8 +1221,10 @@
       </div>
     </div>
   </div>
+  @endif
 
   <!-- ============ Holiday Modal ============ -->
+  @if ($isBranchAdmin)
   <div class="modal fade" id="holidayModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1181,8 +1251,10 @@
       </div>
     </div>
   </div>
+  @endif
 
   <!-- ============ Employee Modal ============ -->
+  @if ($isBranchAdmin)
   <div class="modal fade" id="employeeModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -1272,6 +1344,7 @@
       </div>
     </div>
   </div>
+  @endif
 
   <!-- ============ Designation Modal ============ -->
   <div class="modal fade" id="designationModal" tabindex="-1">
@@ -1289,32 +1362,6 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" class="btn btn-accent">Save Designation</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============ Branch Modal ============ -->
-  <div class="modal fade" id="branchModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Add Branch</h5>
-          <button class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <form id="branchForm">
-          <div class="modal-body">
-            <div class="mb-3"><label class="form-label small">Branch Name</label><input required class="form-control" name="name"></div>
-            <div class="mb-3"><label class="form-label small">Location</label><input required class="form-control" name="location"></div>
-            <div class="row">
-              <div class="col-6 mb-3"><label class="form-label small">Manager Name</label><input required class="form-control" name="manager"></div>
-              <div class="col-6 mb-3"><label class="form-label small">Contact Number</label><input required class="form-control" name="phone"></div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-accent">Save Branch</button>
           </div>
         </form>
       </div>
@@ -1408,8 +1455,12 @@
       salaryCalculations: "{{ route('admin.api.salary-calculations') }}",
       salaryPreview: "{{ route('admin.api.salary-preview') }}",
       holidays: "{{ route('admin.api.holidays') }}",
+      dailyReports: "{{ route('admin.api.reports.daily') }}",
       employeeStatus: "{{ route('admin.api.employees.status') }}",
     };
+
+    const ADMIN_BRANCH = @json($branch ? $branch->name : null);
+    const IS_BRANCH_ADMIN = ADMIN_BRANCH !== null;
 
     $.ajaxSetup({
       headers: {
@@ -1452,10 +1503,13 @@
       designation: ["Designation List", "Job titles across departments"],
       notifications: ["Notifications", "Everything that needs your attention"],
       salary: ["Salary Calculations", "Monthly salary processing"],
-      holidays: ["Holidays", "Manage company holidays"]
+      holidays: ["Holidays", "Manage company holidays"],
+      reports: ["Daily Reports", "Branch-wise employee daily reports"]
     };
 
     function goTo(viewName) {
+      const HIDDEN_VIEWS = IS_BRANCH_ADMIN ? ["branches"] : ["employees", "branches", "leave", "salary", "holidays"];
+      if (HIDDEN_VIEWS.includes(viewName)) return;
       $(".view").removeClass("active");
       $("#view-" + viewName).addClass("active");
       $(".side-link[data-view]").removeClass("active");
@@ -1479,6 +1533,7 @@
       }
       if (viewName === "salary") loadSalaryCalculations();
       if (viewName === "holidays") loadHolidays();
+      if (viewName === "reports") loadReportsView();
     }
 
     $(document).on("click", "[data-view]", function(e) {
@@ -1546,9 +1601,11 @@
 
     function loadEmployees() {
       $("#employeesBody").html(skeletonRows(7, 10));
-      apiGet(API.employees).then(function(rows) {
+      return apiGet(API.employees).then(function(rows) {
         employeesCache = rows || [];
         renderEmployees(employeesCache);
+        populateFilterDropdowns();
+        renderEmployeeList(applyEmployeeListFilters());
       }).fail(function() {
         $("#employeesBody").html('<tr><td colspan="10" class="text-center text-muted py-4">Failed to load employees.</td></tr>');
       });
@@ -1601,10 +1658,11 @@
       apiPost(API.employees + "/delete", {
         id: id
       }).then(function() {
-        employeesCache = employeesCache.filter(function(e) {
-          return e.id !== id;
-        });
-        renderEmployees(employeesCache);
+        loadEmployees();
+        loadDashboard();
+      }).fail(function(xhr) {
+        var msg = (xhr.responseJSON && (xhr.responseJSON.message || JSON.stringify(xhr.responseJSON.errors))) || "unknown error";
+        alert("Failed to remove employee: " + msg);
       });
     }
     let editingEmployeeId = null;
@@ -1694,7 +1752,6 @@
     $("#employeeForm").on("submit", function(e) {
       e.preventDefault();
       const formData = new FormData(this);
-      const data = Object.fromEntries(formData);
 
       function sendRequest(url) {
         $.ajax({
@@ -1707,25 +1764,12 @@
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
           }
         }).then(function() {
-          const empId = data.employee_id;
-          if (editingEmployeeId) {
-            employeesCache = employeesCache.map(function(e) {
-              if (e.id !== editingEmployeeId) return e;
-              return Object.assign({}, e, data, {
-                id: empId,
-                img: pendingPhotoDataUrl || e.img
-              });
-            });
-          } else {
-            data.id = empId;
-            data.status = "Active";
-            data.img = pendingPhotoDataUrl || ("https://i.pravatar.cc/64?img=" + Math.floor(Math.random() * 60));
-            employeesCache.unshift(data);
-          }
-          renderEmployees(employeesCache);
           bootstrap.Modal.getInstance(document.getElementById("employeeModal")).hide();
+          loadEmployees();
+          loadDashboard();
         }).fail(function(xhr) {
           console.error("Employee save failed", xhr.responseJSON || xhr.statusText);
+          alert("Failed to save employee: " + ((xhr.responseJSON && (xhr.responseJSON.message || JSON.stringify(xhr.responseJSON.errors))) || "unknown error"));
         });
       }
 
@@ -1738,6 +1782,7 @@
     function loadEmployeeList() {
       if (!employeesCache || !employeesCache.length) {
         loadEmployees();
+        return;
       }
       populateFilterDropdowns();
       applyEmployeeListFilters();
@@ -1802,12 +1847,11 @@
     let branchesCache = [];
 
     function loadBranches() {
-      $("#branchesBody").html(skeletonRows(3, 7));
       apiGet(API.branches).then(function(rows) {
         branchesCache = rows || [];
-        renderBranches(branchesCache);
+        if ($("#branchesBody").length) renderBranches(branchesCache);
       }).fail(function() {
-        $("#branchesBody").html('<tr><td colspan="7" class="text-center text-muted py-4">Failed to load branches.</td></tr>');
+        if ($("#branchesBody").length) $("#branchesBody").html('<tr><td colspan="7" class="text-center text-muted py-4">Failed to load branches.</td></tr>');
       });
     }
 
@@ -1836,7 +1880,7 @@
         branchesCache = branchesCache.filter(function(b) {
           return b.id !== id;
         });
-        renderBranches(branchesCache);
+        if ($("#branchesBody").length) renderBranches(branchesCache);
       });
     }
     $("#branchForm").on("submit", function(e) {
@@ -2383,6 +2427,148 @@
     });
 
     /* =========================================================================
+       DAILY REPORTS
+       ========================================================================= */
+    let currentReportEmployeeId = null;
+
+    function loadReportsView() {
+      populateReportBranches();
+      if (!employeesCache.length) {
+        loadEmployees().then(renderReportEmployees);
+      } else {
+        renderReportEmployees();
+      }
+    }
+
+    function populateReportBranches() {
+      const branches = (branchesCache && branchesCache.length) ? branchesCache : [];
+      let html = "<option value=''>All Branches</option>";
+      html += branches.map(function(b) {
+        return "<option value='" + b.name + "'>" + b.name + "</option>";
+      }).join("");
+      $("#reportBranchFilter").html(html);
+      if (IS_BRANCH_ADMIN) {
+        $("#reportBranchFilter").val(ADMIN_BRANCH).prop("disabled", true);
+      }
+    }
+
+    function renderReportEmployees() {
+      const branch = $("#reportBranchFilter").val();
+      const rows = employeesCache.filter(function(e) {
+        return !branch || e.branch === branch;
+      });
+      if (!rows.length) {
+        $("#reportEmployeesBody").html('<tr><td colspan="6" class="text-center text-muted py-4">No employees found for the selected branch.</td></tr>');
+        return;
+      }
+      $("#reportEmployeesBody").html(rows.map(function(e) {
+        return "<tr>" +
+          "<td class='mono small text-muted'>" + e.id + "</td>" +
+          "<td><div class='d-flex align-items-center gap-2'><img class='avatar-sm' src='" + e.img + "'><div class='fw-semibold'>" + e.name + "</div></div></td>" +
+          "<td>" + e.designation + "</td>" +
+          "<td class='text-muted small'>" + e.email + "</td>" +
+          "<td>" + statusPill(e.status) + "</td>" +
+          "<td class='text-end'><button class='btn btn-accent btn-sm' onclick='openDailyReport(\"" + e.id + "\",\"" + e.name.replace(/"/g, "&quot;") + "\")'><i class='bi bi-eye-fill'></i> View</button></td>" +
+          "</tr>";
+      }).join(""));
+    }
+
+    $("#reportBranchFilter").on("change", renderReportEmployees);
+
+    function openDailyReport(employeeId, name) {
+      currentReportEmployeeId = employeeId;
+      $("#dailyReportTitle").text("Daily Report - " + name + " (" + employeeId + ")");
+      $("#reportPeriodGroup .btn").removeClass("active");
+      $("#reportPeriodGroup .btn[data-period='all']").addClass("active");
+      $("#reportDateWrap").hide();
+      $("#reportMonthWrap").hide();
+      $("#reportDate").val("");
+      $("#reportMonth").val("");
+      loadDailyReport();
+      new bootstrap.Modal(document.getElementById("dailyReportModal")).show();
+    }
+
+    $("#reportPeriodGroup .btn").on("click", function() {
+      $("#reportPeriodGroup .btn").removeClass("active");
+      $(this).addClass("active");
+      const period = $(this).data("period");
+      $("#reportDateWrap").toggle(period === "date");
+      $("#reportMonthWrap").toggle(period === "month");
+      loadDailyReport();
+    });
+
+    $("#reportDate, #reportMonth").on("change", loadDailyReport);
+
+    function loadDailyReport() {
+      if (!currentReportEmployeeId) return;
+      const period = $("#reportPeriodGroup .btn.active").data("period");
+      let url = API.dailyReports + "?employee_id=" + encodeURIComponent(currentReportEmployeeId);
+      if (period === "date" && $("#reportDate").val()) {
+        url += "&date=" + $("#reportDate").val();
+      }
+      if (period === "month" && $("#reportMonth").val()) {
+        url += "&month=" + $("#reportMonth").val();
+      }
+
+      $("#dailyReportBody").html(skeletonRows(4, 6));
+      apiGet(url).then(function(rows) {
+        if (!rows || !rows.length) {
+          $("#dailyReportBody").html('<tr><td colspan="6" class="text-center text-muted py-4">No reports found for the selected period.</td></tr>');
+          return;
+        }
+        $("#dailyReportBody").html(rows.map(function(r) {
+          return "<tr>" +
+            "<td class='mono small'>" + r.date + "</td>" +
+            "<td class='mono small'>" + r.check_in + "</td>" +
+            "<td class='mono small'>" + r.check_out + "</td>" +
+            "<td class='mono small'>" + r.hours + "</td>" +
+            "<td>" + attendancePill(r.status) + "</td>" +
+            "<td class='small report-text'>" + (r.report ? r.report : "<span class='text-muted'>--</span>") + "</td>" +
+            "</tr>";
+        }).join(""));
+      }).fail(function() {
+        $("#dailyReportBody").html('<tr><td colspan="6" class="text-center text-muted py-4">Failed to load reports.</td></tr>');
+      });
+    }
+
+    function downloadAdminReportPdf() {
+      var bodyHtml = $("#dailyReportBody").html();
+      if (!bodyHtml || bodyHtml.indexOf("No reports") > -1) {
+        alert("No report data to download.");
+        return;
+      }
+      var period = "All records";
+      if ($("#reportPeriodGroup .btn.active").data("period") === "date") period = "Date: " + $("#reportDate").val();
+      else if ($("#reportPeriodGroup .btn.active").data("period") === "month") period = "Month: " + $("#reportMonth").val();
+
+      var title = $("#dailyReportTitle").text();
+      var cleanRows = bodyHtml.replace(/<span class="pill[^"]*">(.*?)<\/span>/g, "$1");
+
+      var $el = $("<div style='padding:24px;font-family:Helvetica,Arial,sans-serif;color:#111;'>" +
+        "<h2 style='margin:0 0 2px;color:#0a8577;'>Guru Group Attendance</h2>" +
+        "<p style='margin:0 0 14px;color:#555;font-size:12px;'>" + title + "<br>" + period + "</p>" +
+        "<table style='width:100%;border-collapse:collapse;font-size:11px;'>" +
+        "<thead><tr style='background:#0fb5a3;color:#fff;'>" +
+        "<th style='padding:6px;border:1px solid #cfd2dd;text-align:left;'>Date</th>" +
+        "<th style='padding:6px;border:1px solid #cfd2dd;text-align:left;'>Check In</th>" +
+        "<th style='padding:6px;border:1px solid #cfd2dd;text-align:left;'>Check Out</th>" +
+        "<th style='padding:6px;border:1px solid #cfd2dd;text-align:left;'>Hours</th>" +
+        "<th style='padding:6px;border:1px solid #cfd2dd;text-align:left;'>Status</th>" +
+        "<th style='padding:6px;border:1px solid #cfd2dd;text-align:left;'>Daily Report</th>" +
+        "</tr></thead><tbody>" + cleanRows + "</tbody></table></div>").appendTo("body");
+
+      html2pdf().set({
+        margin: [10, 10, 10, 10],
+        filename: "daily-report-" + $("#dailyReportTitle").text().replace(/[^a-zA-Z0-9]/g, "-") + ".pdf",
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+      }).from($el[0]).save().then(function() {
+        $el.remove();
+      });
+    }
+
+    /* =========================================================================
        HELPERS
        ========================================================================= */
     function statusPill(status) {
@@ -2432,6 +2618,7 @@
       const map = {
         Present: "pill-teal",
         Late: "pill-amber",
+        "Half-day": "pill-amber",
         "On Leave": "pill-indigo",
         Absent: "pill-coral",
         Holiday: "pill-indigo"
@@ -2470,7 +2657,7 @@
        ========================================================================= */
     $(function() {
       loadDashboard();
-      loadLeave();
+      if (IS_BRANCH_ADMIN) loadLeave();
       loadNotifications();
       loadNotifTargets();
       loadBranches();

@@ -31,7 +31,11 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
 
         if ($user->role === 'admin') {
-            return redirect()->intended(route('admin.dashboard', absolute: false));
+            $dashboardUrl = $user->branch
+                ? route('admin.branch-dashboard', ['slug' => $user->branch->slug()], absolute: false)
+                : route('admin.dashboard', absolute: false);
+
+            return redirect()->intended($dashboardUrl);
         }
 
         return redirect()->intended(route('dashboard', absolute: false));
