@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Designation;
 use App\Models\Employee;
+use App\Models\DailyPlan;
 use App\Models\Holiday;
 use App\Models\LeaveRequest;
 use App\Models\Notification;
@@ -73,10 +75,7 @@ class ApiController extends Controller
 
         $total = Employee::query()->when($branchId, fn ($q) => $q->where('branch_id', $branchId))->count();
         $today = Carbon::today();
-        $presentToday = Attendance::whereDate('date', $today)->where('status', 'present')
-            ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
-            ->count();
-        $absent = Attendance::whereDate('date', $today)->where('status', 'absent')
+        $presentToday = Attendance::whereDate('date', $today)->whereIn('status', ['present', 'half-day', 'late'])
             ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
             ->count();
         $onLeave = LeaveRequest::where('status', 'Approved')
@@ -87,12 +86,13 @@ class ApiController extends Controller
         $pending = LeaveRequest::where('status', 'Pending')
             ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
             ->count();
+        $absent = max(0, $total - $presentToday - $onLeave);
 
         return response()->json([
             'total' => $total ?: 0,
             'present' => $presentToday ?: 0,
             'onLeave' => $onLeave ?: 0,
-            'absent' => $absent ?: 0,
+            'absent' => $absent,
             'pending' => $pending ?: 0,
         ]);
     }
@@ -915,23 +915,32 @@ class ApiController extends Controller
 
     public function holidays(): JsonResponse
     {
-        $holidays = Holiday::latest('date')->get()->map(function ($h) {
-            return [
-                'id' => $h->id,
-                'date' => $h->date->toDateString(),
-                'title' => $h->title,
-            ];
-        });
+        $branchId = $this->branchScope();
+
+        $holidays = Holiday::when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->latest('date')
+            ->get()
+            ->map(function ($h) {
+                return [
+                    'id' => $h->id,
+                    'date' => $h->date->toDateString(),
+                    'title' => $h->title,
+                ];
+            });
 
         return response()->json($holidays);
     }
 
     public function storeHoliday(Request $request): JsonResponse
     {
+        $branchId = $this->branchScope();
+
         $data = $request->validate([
-            'date' => 'required|date|unique:holidays,date',
+            'date' => 'required|date',
             'title' => 'required|string|max:255',
         ]);
+
+        $data['branch_id'] = $branchId;
 
         Holiday::create($data);
 
@@ -940,7 +949,187 @@ class ApiController extends Controller
 
     public function deleteHoliday(Request $request): JsonResponse
     {
-        Holiday::where('id', $request->id)->delete();
+        $branchId = $this->branchScope();
+
+        $query = Holiday::where('id', $request->id);
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+        $query->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function dailyPlans(): JsonResponse
+    {
+        $branchId = $this->branchScope();
+
+        $plans = DailyPlan::with('branch')
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->latest('date')
+            ->latest('id')
+            ->get()
+            ->map(function ($p, $i) {
+                return [
+                    'sino' => $i + 1,
+                    'id' => $p->id,
+                    'branch' => $p->branch?->name ?? '-',
+                    'date' => $p->date->toDateString(),
+                    'salesperson' => $p->salesperson,
+                    'company_address' => $p->company_address,
+                    'company_details' => $p->company_details,
+                    'purpose_of_visit' => $p->purpose_of_visit,
+                    'type_of_service' => $p->type_of_service,
+                    'inspection' => $p->inspection,
+                    'quotation' => $p->quotation,
+                    'followup1' => $p->followup1,
+                    'followup2' => $p->followup2,
+                    'followup3' => $p->followup3,
+                    'remarks' => $p->remarks,
+                    'updated_at' => $p->updated_at->format('Y-m-d H:i'),
+                ];
+            });
+
+        return response()->json($plans);
+    }
+
+    public function storeDailyPlan(Request $request): JsonResponse
+    {
+        $branchId = $this->branchScope();
+
+        $data = $request->validate([
+            'date' => 'required|date',
+            'salesperson' => 'nullable|string|max:255',
+            'company_address' => 'nullable|string',
+            'company_details' => 'nullable|string',
+            'purpose_of_visit' => 'nullable|string',
+            'type_of_service' => 'nullable|string',
+            'inspection' => 'nullable|string',
+            'quotation' => 'nullable|string',
+            'followup1' => 'nullable|string',
+            'followup2' => 'nullable|string',
+            'followup3' => 'nullable|string',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $data['branch_id'] = $branchId;
+
+        DailyPlan::create($data);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function updateDailyPlan(Request $request): JsonResponse
+    {
+        $branchId = $this->branchScope();
+
+        $plan = DailyPlan::findOrFail($request->id);
+
+        if ($branchId && (int) $plan->branch_id !== $branchId) {
+            abort(403, 'Access denied.');
+        }
+
+        $data = $request->validate([
+            'date' => 'required|date',
+            'salesperson' => 'nullable|string|max:255',
+            'company_address' => 'nullable|string',
+            'company_details' => 'nullable|string',
+            'purpose_of_visit' => 'nullable|string',
+            'type_of_service' => 'nullable|string',
+            'inspection' => 'nullable|string',
+            'quotation' => 'nullable|string',
+            'followup1' => 'nullable|string',
+            'followup2' => 'nullable|string',
+            'followup3' => 'nullable|string',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $plan->update($data);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function deleteDailyPlan(Request $request): JsonResponse
+    {
+        $branchId = $this->branchScope();
+
+        $plan = DailyPlan::findOrFail($request->id);
+
+        if ($branchId && (int) $plan->branch_id !== $branchId) {
+            abort(403, 'Access denied.');
+        }
+
+        $plan->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function adminList(): JsonResponse
+    {
+        $admins = User::where('role', 'admin')
+            ->with('branch')
+            ->get()
+            ->map(function ($u) {
+                return [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'email' => $u->email,
+                    'branch' => $u->branch?->name ?? 'Super Admin',
+                ];
+            });
+
+        return response()->json($admins);
+    }
+
+    public function adminNotifications(): JsonResponse
+    {
+        $userId = auth()->id();
+
+        $notes = AdminNotification::where('to_user_id', $userId)
+            ->latest()
+            ->get()
+            ->map(function ($n) {
+                return [
+                    'id' => $n->id,
+                    'from' => $n->fromUser->name ?? 'System',
+                    'title' => $n->title,
+                    'body' => $n->body,
+                    'time' => $n->created_at->diffForHumans(),
+                    'unread' => $n->read_at === null,
+                ];
+            });
+
+        return response()->json($notes);
+    }
+
+    public function sendAdminNotification(Request $request): JsonResponse
+    {
+        $fromUserId = auth()->id();
+
+        $data = $request->validate([
+            'to_user_id' => 'required|exists:users,id',
+            'title' => 'required|string|max:255',
+            'body' => 'nullable|string',
+        ]);
+
+        AdminNotification::create([
+            'from_user_id' => $fromUserId,
+            'to_user_id' => $data['to_user_id'],
+            'title' => $data['title'],
+            'body' => $data['body'] ?? null,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function markAdminNotificationsRead(): JsonResponse
+    {
+        $userId = auth()->id();
+
+        AdminNotification::where('to_user_id', $userId)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
         return response()->json(['success' => true]);
     }
 }

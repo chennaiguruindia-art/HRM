@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-branch="{{ $branch ? $branch->name : '' }}">
 
 <head>
   <meta charset="UTF-8">
@@ -682,11 +682,14 @@
           <i class="bi bi-calendar-heart-fill"></i> Holidays
         </div>
         @endif
-        <div class="side-link" data-view="reports">
-          <i class="bi bi-file-earmark-bar-graph-fill"></i> Daily Reports
-        </div>
+    <div class="side-link" data-view="reports">
+      <i class="bi bi-file-earmark-bar-graph-fill"></i> Daily Reports
+    </div>
+    <div class="side-link" data-view="daily-plan">
+      <i class="bi bi-journal-text"></i> Daily Plan
+    </div>
 
-        <div class="nav-label">Session</div>
+    <div class="nav-label">Session</div>
         <div class="side-link" id="logoutLink">
           <i class="bi bi-box-arrow-right"></i> Logout
         </div>
@@ -976,6 +979,53 @@
 
         <!-- ================= NOTIFICATIONS VIEW ================= -->
         <section class="view" id="view-notifications">
+          @if (!$isBranchAdmin)
+          <div class="section-card">
+            <div class="section-head">
+              <h5>Send Notification to Admin</h5>
+            </div>
+            <form id="sendAdminNotifForm">
+              <div class="row g-2 mb-2">
+                <div class="col-md-5">
+                  <label class="form-label small fw-semibold">Send To</label>
+                  <select id="adminNotifTarget" class="form-select form-select-sm">
+                    <option value="">Select Admin</option>
+                  </select>
+                </div>
+                <div class="col-md-7">
+                  <label class="form-label small fw-semibold">Title</label>
+                  <input type="text" id="adminNotifTitle" class="form-control form-control-sm" placeholder="e.g. Important update" required>
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">Message</label>
+                <textarea id="adminNotifBody" class="form-control form-control-sm" rows="3" placeholder="Message to admin..." required></textarea>
+              </div>
+              <div id="adminNotifSendMsg" class="small mb-2"></div>
+              <button type="submit" class="btn btn-accent btn-sm"><i class="bi bi-send"></i> Send to Admin</button>
+            </form>
+          </div>
+
+          <div class="section-card">
+            <div class="section-head">
+              <h5>Admin Notifications</h5>
+              <button type="button" class="btn btn-ghost btn-sm ms-auto" id="markAdminNotifReadBtn">Mark all as read</button>
+            </div>
+            <div id="adminNotifList"></div>
+          </div>
+          @endif
+
+          @if ($isBranchAdmin)
+          <div class="section-card">
+            <div class="section-head">
+              <h5>Messages from Super Admin</h5>
+              <button type="button" class="btn btn-ghost btn-sm ms-auto" id="markAdminNotifReadBtn2">Mark all as read</button>
+            </div>
+            <div id="adminNotifListBranch"></div>
+          </div>
+          @endif
+
+          @if ($isBranchAdmin)
           <div class="section-card">
             <div class="section-head">
               <h5>Send Notification</h5>
@@ -1009,6 +1059,7 @@
             </div>
             <div id="notifList"></div>
           </div>
+          @endif
         </section>
 
         <!-- ================= SALARY VIEW ================= -->
@@ -1091,6 +1142,47 @@
           </div>
         </section>
 
+        <!-- ================= DAILY PLAN VIEW ================= -->
+        <section class="view" id="view-daily-plan">
+          <div class="section-card">
+            <div class="section-head">
+              <h5>Daily Plan</h5>
+              @if ($isBranchAdmin)
+              <button class="btn btn-accent btn-sm ms-auto" onclick="openDailyPlanModal()"><i class="bi bi-plus-lg"></i> Add Plan</button>
+              @endif
+            </div>
+            <div class="table-responsive">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Si.No</th>
+                    @if (!$isBranchAdmin)
+                    <th>Branch</th>
+                    @endif
+                    <th>Date</th>
+                    <th>Salesperson</th>
+                    <th>Company Address</th>
+                    <th>Company Details</th>
+                    <th>Purpose of Visit</th>
+                    <th>Type of Service</th>
+                    <th>Inspection</th>
+                    <th>Quotation</th>
+                    <th>Followup 1</th>
+                    <th>Followup 2</th>
+                    <th>Followup 3</th>
+                    <th>Remarks</th>
+                    <th>Updated</th>
+                    @if ($isBranchAdmin)
+                    <th class="text-end">Actions</th>
+                    @endif
+                  </tr>
+                </thead>
+                <tbody id="dailyPlanBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
       </main>
     </div>
   </div>
@@ -1141,6 +1233,79 @@
       </div>
     </div>
   </div>
+
+  <!-- ============ Daily Plan Modal ============ -->
+  @if ($isBranchAdmin)
+  <div class="modal fade" id="dailyPlanModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="dailyPlanModalTitle">Add Daily Plan</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="dailyPlanForm">
+          <div class="modal-body">
+            <input type="hidden" name="id" id="dpFormId">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label small">Date <span class="text-danger">*</span></label>
+                <input required type="date" class="form-control form-control-sm" name="date" id="dpDate">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small">Salesperson</label>
+                <input type="text" class="form-control form-control-sm" name="salesperson" placeholder="Salesperson name">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small">Type of Service</label>
+                <input type="text" class="form-control form-control-sm" name="type_of_service" placeholder="e.g. AMC, Installation">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Company Address</label>
+                <textarea class="form-control form-control-sm" name="company_address" rows="2" placeholder="Full address"></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Company Details</label>
+                <textarea class="form-control form-control-sm" name="company_details" rows="2" placeholder="Company name, contact info..."></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Purpose of Visit</label>
+                <textarea class="form-control form-control-sm" name="purpose_of_visit" rows="2" placeholder="Purpose of visit"></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Inspection</label>
+                <textarea class="form-control form-control-sm" name="inspection" rows="2" placeholder="Inspection details"></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Quotation</label>
+                <textarea class="form-control form-control-sm" name="quotation" rows="2" placeholder="Quotation details"></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Followup 1</label>
+                <textarea class="form-control form-control-sm" name="followup1" rows="2" placeholder="Followup 1"></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Followup 2</label>
+                <textarea class="form-control form-control-sm" name="followup2" rows="2" placeholder="Followup 2"></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Followup 3</label>
+                <textarea class="form-control form-control-sm" name="followup3" rows="2" placeholder="Followup 3"></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label small">Remarks</label>
+                <textarea class="form-control form-control-sm" name="remarks" rows="2" placeholder="Additional remarks"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-accent" id="dailyPlanSubmitBtn">Save Plan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  @endif
 
   <!-- ============ Salary Modal ============ -->
   @if ($isBranchAdmin)
@@ -1455,11 +1620,16 @@
       salaryCalculations: "{{ route('admin.api.salary-calculations') }}",
       salaryPreview: "{{ route('admin.api.salary-preview') }}",
       holidays: "{{ route('admin.api.holidays') }}",
+      dailyPlans: "{{ route('admin.api.daily-plans') }}",
       dailyReports: "{{ route('admin.api.reports.daily') }}",
       employeeStatus: "{{ route('admin.api.employees.status') }}",
+      adminList: "{{ route('admin.api.admin-list') }}",
+      adminNotifications: "{{ route('admin.api.admin-notifications') }}",
+      sendAdminNotification: "{{ route('admin.api.admin-notifications.send') }}",
+      markAdminNotificationsRead: "{{ route('admin.api.admin-notifications.read') }}",
     };
 
-    const ADMIN_BRANCH = @json($branch ? $branch->name : null);
+    const ADMIN_BRANCH = document.documentElement.getAttribute('data-branch') || null;
     const IS_BRANCH_ADMIN = ADMIN_BRANCH !== null;
 
     $.ajaxSetup({
@@ -1504,7 +1674,8 @@
       notifications: ["Notifications", "Everything that needs your attention"],
       salary: ["Salary Calculations", "Monthly salary processing"],
       holidays: ["Holidays", "Manage company holidays"],
-      reports: ["Daily Reports", "Branch-wise employee daily reports"]
+      reports: ["Daily Reports", "Branch-wise employee daily reports"],
+      "daily-plan": ["Daily Plan", "Track sales visits and followups"]
     };
 
     function goTo(viewName) {
@@ -1530,10 +1701,13 @@
       if (viewName === "notifications") {
         loadNotifications();
         loadNotifTargets();
+        loadAdminNotifications();
+        if (!IS_BRANCH_ADMIN) loadAdminList();
       }
       if (viewName === "salary") loadSalaryCalculations();
       if (viewName === "holidays") loadHolidays();
       if (viewName === "reports") loadReportsView();
+      if (viewName === "daily-plan") loadDailyPlans();
     }
 
     $(document).on("click", "[data-view]", function(e) {
@@ -2249,6 +2423,83 @@
       });
     });
 
+    /* ---------------- Admin Notifications ---------------- */
+    let adminListCache = [];
+
+    function loadAdminList() {
+      if (adminListCache.length) return;
+      apiGet(API.adminList).then(function(rows) {
+        adminListCache = rows || [];
+        renderAdminNotifTargets();
+      });
+    }
+
+    function renderAdminNotifTargets() {
+      const options = adminListCache.map(function(a) {
+        return "<option value='" + a.id + "'>" + a.name + " (" + a.branch + ")</option>";
+      }).join("");
+      $("#adminNotifTarget").html('<option value="">Select Admin</option>' + options);
+    }
+
+    function loadAdminNotifications() {
+      apiGet(API.adminNotifications).then(function(rows) {
+        const unread = (rows || []).filter(function(n) { return n.unread; }).length;
+        if ($("#adminNotifBadge").length) {
+          $("#adminNotifBadge").text(unread);
+        }
+        const target = IS_BRANCH_ADMIN ? "#adminNotifListBranch" : "#adminNotifList";
+        $(target).html((rows || []).map(function(n) {
+          return "<div class='notif-item " + (n.unread ? "unread" : "") + "'>" +
+            "<div class='notif-ic' style='background:var(--accent-soft);color:#4147a8;'><i class='bi bi-person-badge'></i></div>" +
+            "<div class='flex-grow-1'>" +
+            "<div class='fw-semibold small'>" + n.title + "</div>" +
+            "<div class='text-muted small'>" + (n.body || '') + "</div>" +
+            "<div class='notif-time'>From: " + n.from + " &middot; " + n.time + "</div>" +
+            "</div>" +
+            "</div>";
+        }).join("") || '<div class="text-center text-muted py-3 small">No notifications.</div>');
+      });
+    }
+
+    function markAdminNotifRead() {
+      apiPost(API.markAdminNotificationsRead, { all: true }).then(function() {
+        loadAdminNotifications();
+      });
+    }
+
+    $(document).on("click", "#markAdminNotifReadBtn, #markAdminNotifReadBtn2", function() {
+      markAdminNotifRead();
+    });
+
+    $("#sendAdminNotifForm").on("submit", function(e) {
+      e.preventDefault();
+      const $msg = $("#adminNotifSendMsg");
+      $msg.removeClass("text-danger text-success").text("");
+      const toUserId = $("#adminNotifTarget").val();
+      const title = $("#adminNotifTitle").val().trim();
+      const body = $("#adminNotifBody").val().trim();
+      if (!toUserId || !title || !body) {
+        $msg.addClass("text-danger").text("Please select an admin and fill in title & message.");
+        return;
+      }
+      const btn = $(this).find("button[type=submit]");
+      btn.prop("disabled", true);
+      apiPost(API.sendAdminNotification, {
+        to_user_id: toUserId,
+        title: title,
+        body: body
+      }).done(function() {
+        $msg.addClass("text-success").text("Notification sent to admin.");
+        $("#adminNotifTitle").val("");
+        $("#adminNotifBody").val("");
+        $("#adminNotifTarget").val("");
+      }).fail(function() {
+        $msg.addClass("text-danger").text("Failed to send notification.");
+      }).always(function() {
+        btn.prop("disabled", false);
+      });
+    });
+
     /* =========================================================================
        SALARY CALCULATIONS
        ========================================================================= */
@@ -2423,6 +2674,105 @@
         bootstrap.Modal.getInstance(document.getElementById("holidayModal")).hide();
       }).fail(function(xhr) {
         console.error("Adding holiday failed", xhr.responseJSON || xhr.statusText);
+      });
+    });
+
+    /* =========================================================================
+       DAILY PLAN
+       ========================================================================= */
+    let dailyPlansCache = [];
+
+    function loadDailyPlans() {
+      $("#dailyPlanBody").html(skeletonRows(4, 15));
+      apiGet(API.dailyPlans).then(function(rows) {
+        dailyPlansCache = rows || [];
+        renderDailyPlans(dailyPlansCache);
+      }).fail(function() {
+        $("#dailyPlanBody").html('<tr><td colspan="15" class="text-center text-muted py-4">Failed to load daily plans.</td></tr>');
+      });
+    }
+
+    function renderDailyPlans(rows) {
+      if (!rows.length) {
+        $("#dailyPlanBody").html('<tr><td colspan="' + (IS_BRANCH_ADMIN ? 15 : 16) + '" class="text-center text-muted py-4">No daily plans yet.</td></tr>');
+        return;
+      }
+      $("#dailyPlanBody").html(rows.map(function(p, i) {
+        let html = "<tr>" +
+          "<td class='mono small'>" + p.sino + "</td>";
+        if (!IS_BRANCH_ADMIN) {
+          html += "<td><span class='badge bg-info bg-opacity-10 text-info'>" + (p.branch || '-') + "</span></td>";
+        }
+        html += "<td class='mono'>" + p.date + "</td>" +
+          "<td>" + (p.salesperson || '-') + "</td>" +
+          "<td>" + (p.company_address || '-') + "</td>" +
+          "<td>" + (p.company_details || '-') + "</td>" +
+          "<td>" + (p.purpose_of_visit || '-') + "</td>" +
+          "<td>" + (p.type_of_service || '-') + "</td>" +
+          "<td>" + (p.inspection || '-') + "</td>" +
+          "<td>" + (p.quotation || '-') + "</td>" +
+          "<td>" + (p.followup1 || '-') + "</td>" +
+          "<td>" + (p.followup2 || '-') + "</td>" +
+          "<td>" + (p.followup3 || '-') + "</td>" +
+          "<td>" + (p.remarks || '-') + "</td>" +
+          "<td class='mono small text-muted'>" + p.updated_at + "</td>";
+        if (IS_BRANCH_ADMIN) {
+          html += "<td class='text-end whitespace-nowrap'>" +
+            "<span class='action-ic me-1' title='Edit' onclick='editDailyPlan(" + i + ")'><i class='bi bi-pencil-fill'></i></span>" +
+            "<span class='action-ic text-danger' title='Delete' onclick='deleteDailyPlan(" + p.id + ")'><i class='bi bi-trash-fill'></i></span>" +
+            "</td>";
+        }
+        html += "</tr>";
+        return html;
+      }).join(""));
+    }
+
+    function openDailyPlanModal(data) {
+      $("#dailyPlanForm")[0].reset();
+      $("#dpFormId").val("");
+      $("#dailyPlanModalTitle").text("Add Daily Plan");
+      $("#dailyPlanSubmitBtn").text("Save Plan");
+      if (data) {
+        $("#dpFormId").val(data.id);
+        $("#dailyPlanModalTitle").text("Edit Daily Plan");
+        $("#dailyPlanSubmitBtn").text("Update Plan");
+        const form = $("#dailyPlanForm")[0];
+        form.date.value = data.date || "";
+        form.salesperson.value = data.salesperson || "";
+        form.company_address.value = data.company_address || "";
+        form.company_details.value = data.company_details || "";
+        form.purpose_of_visit.value = data.purpose_of_visit || "";
+        form.type_of_service.value = data.type_of_service || "";
+        form.inspection.value = data.inspection || "";
+        form.quotation.value = data.quotation || "";
+        form.followup1.value = data.followup1 || "";
+        form.followup2.value = data.followup2 || "";
+        form.followup3.value = data.followup3 || "";
+        form.remarks.value = data.remarks || "";
+      }
+      new bootstrap.Modal(document.getElementById("dailyPlanModal")).show();
+    }
+
+    function editDailyPlan(index) {
+      openDailyPlanModal(dailyPlansCache[index]);
+    }
+
+    function deleteDailyPlan(id) {
+      if (!confirm("Delete this daily plan entry?")) return;
+      apiPost(API.dailyPlans + "/delete", { id: id }).then(function() {
+        loadDailyPlans();
+      });
+    }
+
+    $("#dailyPlanForm").on("submit", function(e) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(this));
+      const url = data.id ? API.dailyPlans + "/update" : API.dailyPlans;
+      apiPost(url, data).then(function() {
+        loadDailyPlans();
+        bootstrap.Modal.getInstance(document.getElementById("dailyPlanModal")).hide();
+      }).fail(function(xhr) {
+        console.error("Saving daily plan failed", xhr.responseJSON || xhr.statusText);
       });
     });
 

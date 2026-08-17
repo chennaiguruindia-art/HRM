@@ -6,12 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Holiday extends Model
 {
-    protected $fillable = ['date', 'title'];
+    protected $fillable = ['branch_id', 'date', 'title'];
 
     protected function casts(): array
     {
         return [
             'date' => 'date',
         ];
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

@@ -50,6 +50,14 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::get('/holidays', [App\Http\Controllers\Admin\ApiController::class, 'holidays'])->name('holidays');
         Route::post('/holidays', [App\Http\Controllers\Admin\ApiController::class, 'storeHoliday'])->name('holidays.store');
         Route::post('/holidays/delete', [App\Http\Controllers\Admin\ApiController::class, 'deleteHoliday'])->name('holidays.delete');
+        Route::get('/daily-plans', [App\Http\Controllers\Admin\ApiController::class, 'dailyPlans'])->name('daily-plans');
+        Route::post('/daily-plans', [App\Http\Controllers\Admin\ApiController::class, 'storeDailyPlan'])->name('daily-plans.store');
+        Route::post('/daily-plans/update', [App\Http\Controllers\Admin\ApiController::class, 'updateDailyPlan'])->name('daily-plans.update');
+        Route::post('/daily-plans/delete', [App\Http\Controllers\Admin\ApiController::class, 'deleteDailyPlan'])->name('daily-plans.delete');
+        Route::get('/admin-list', [App\Http\Controllers\Admin\ApiController::class, 'adminList'])->name('admin-list');
+        Route::get('/admin-notifications', [App\Http\Controllers\Admin\ApiController::class, 'adminNotifications'])->name('admin-notifications');
+        Route::post('/admin-notifications/send', [App\Http\Controllers\Admin\ApiController::class, 'sendAdminNotification'])->name('admin-notifications.send');
+        Route::post('/admin-notifications/read', [App\Http\Controllers\Admin\ApiController::class, 'markAdminNotificationsRead'])->name('admin-notifications.read');
     });
 });
 
