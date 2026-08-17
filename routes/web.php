@@ -79,6 +79,9 @@ Route::prefix('employee')->name('employee.')->group(function () {
     Route::post('/leave', [App\Http\Controllers\EmployeeController::class, 'storeLeaveRequest'])->name('leave');
     Route::post('/profile/update', [App\Http\Controllers\EmployeeController::class, 'updateProfile'])->name('profile.update');
     Route::post('/notifications/read', [App\Http\Controllers\EmployeeController::class, 'markNotificationsRead'])->name('notifications.read');
+    Route::get('/daily-work-updates', [App\Http\Controllers\EmployeeController::class, 'dailyWorkUpdates'])->name('daily-work-updates');
+    Route::post('/daily-work-updates', [App\Http\Controllers\EmployeeController::class, 'storeDailyWorkUpdate'])->name('daily-work-updates.store');
+    Route::post('/daily-work-updates/delete', [App\Http\Controllers\EmployeeController::class, 'deleteDailyWorkUpdate'])->name('daily-work-updates.delete');
 });
 
 require __DIR__.'/auth.php';

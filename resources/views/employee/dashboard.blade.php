@@ -732,6 +732,7 @@
         <div class="side-link" data-view="profile"><i class="bi bi-person-badge-fill"></i> Profile</div>
         <div class="side-link" data-view="attendance"><i class="bi bi-calendar2-check-fill"></i> Attendance</div>
         <div class="side-link" data-view="reports"><i class="bi bi-file-earmark-bar-graph-fill"></i> Daily Reports</div>
+        <div class="side-link" data-view="work-update"><i class="bi bi-journal-check"></i> Work Update</div>
         <div class="side-link" data-view="leave">
           <i class="bi bi-file-earmark-text-fill"></i> Leave / Permission
           <span class="badge-pill" id="leaveBadge">{{ $pendingLeaves->count() }}</span>
@@ -1058,6 +1059,29 @@
           </div>
         </section>
 
+        <!-- ================= WORK UPDATE VIEW ================= -->
+        <section class="view" id="view-work-update">
+          <div class="section-card">
+            <div class="section-head">
+              <h5>Daily Work Update</h5>
+              <button class="btn btn-accent btn-sm ms-auto" onclick="openWorkUpdateModal()"><i class="bi bi-plus-lg"></i> Add Update</button>
+            </div>
+            <div class="table-responsive">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Work Report</th>
+                    <th>Updated</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="workUpdateBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <section class="view" id="view-leave">
           <div class="row g-3 mb-2">
             <div class="col-6 col-lg-3">
@@ -1338,6 +1362,32 @@
     </div>
   </div>
 
+  <!-- Work Update Modal -->
+  <div class="modal-overlay" id="workUpdateModal">
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h6 class="mb-0" id="workUpdateModalTitle">Add Work Update</h6>
+        <button type="button" class="modal-close" id="workUpdateModalClose">&times;</button>
+      </div>
+      <form id="workUpdateForm">
+        <input type="hidden" id="wuFormId">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Date <span class="text-danger">*</span></label>
+          <input required type="date" class="form-control form-control-sm" id="wuDate">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Work Report <span class="text-danger">*</span></label>
+          <textarea class="form-control form-control-sm" id="wuReport" rows="5" placeholder="Describe what you worked on today..." required></textarea>
+        </div>
+        <div id="wuMsg" class="small mb-0"></div>
+        <div class="d-flex gap-2 justify-content-end mt-3">
+          <button type="button" class="btn btn-ghost btn-sm" id="workUpdateCancel">Cancel</button>
+          <button type="submit" class="btn btn-accent btn-sm" id="wuSubmitBtn">Save Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script>
@@ -1354,7 +1404,8 @@
       reports: ['Daily Reports', 'Your daily work reports'],
       leave: ['Leave / Permission', 'Apply for leaves and track requests'],
       notifications: ['Notifications', 'Updates and announcements'],
-      salary: ['Salary', 'Monthly salary calculation']
+      salary: ['Salary', 'Monthly salary calculation'],
+      'work-update': ['Work Update', 'Submit and manage daily work updates']
     };
 
     function switchView(name) {
@@ -1368,6 +1419,7 @@
       $('#sidebar').removeClass('open');
       $('#sidebarOverlay').removeClass('show');
       if (name === 'reports') loadEmpReports();
+      if (name === 'work-update') loadWorkUpdates();
     }
 
     $(document).on('click', '.side-link[data-view]', function() {
@@ -1578,8 +1630,99 @@
         $btn.prop('disabled', false);
       });
     });
-  </script>
 
+    /* ---------------- Work Update ---------------- */
+    var workUpdates = [];
+
+    function loadWorkUpdates() {
+      $.get('{{ route("employee.daily-work-updates") }}', function(data) {
+        workUpdates = data;
+        renderWorkUpdates();
+      });
+    }
+
+    function renderWorkUpdates() {
+      var tbody = $('#workUpdateBody');
+      tbody.empty();
+      if (!workUpdates.length) {
+        tbody.append('<tr><td colspan="4" class="text-center text-muted py-3">No work updates yet</td></tr>');
+        return;
+      }
+      workUpdates.forEach(function(u) {
+        var reportShort = u.report.length > 80 ? u.report.substring(0, 80) + '...' : u.report;
+        tbody.append(
+          '<tr>' +
+          '<td>' + u.date + '</td>' +
+          '<td title="' + u.report.replace(/"/g, '&quot;') + '">' + reportShort + '</td>' +
+          '<td>' + u.updated_at + '</td>' +
+          '<td class="text-end">' +
+          '<button class="btn btn-sm btn-outline-accent me-1" onclick="editWorkUpdate(' + u.id + ')"><i class="bi bi-pencil"></i></button>' +
+          '<button class="btn btn-sm btn-outline-danger" onclick="deleteWorkUpdate(' + u.id + ')"><i class="bi bi-trash"></i></button>' +
+          '</td></tr>'
+        );
+      });
+    }
+
+    function openWorkUpdateModal(id, date, report) {
+      $('#wuFormId').val(id || '');
+      $('#wuDate').val(date || new Date().toISOString().slice(0, 10));
+      $('#wuReport').val(report || '');
+      $('#wuMsg').hide().removeClass('text-success text-danger');
+      $('#workUpdateModalTitle').text(id ? 'Edit Work Update' : 'Add Work Update');
+      $('#workUpdateModal').addClass('show');
+    }
+
+    function editWorkUpdate(id) {
+      var u = workUpdates.find(function(x) { return x.id === id; });
+      if (u) openWorkUpdateModal(u.id, u.date, u.report);
+    }
+
+    function closeWorkUpdateModal() {
+      $('#workUpdateModal').removeClass('show');
+    }
+
+    $('#workUpdateModalClose, #workUpdateCancel').on('click', closeWorkUpdateModal);
+    $('#workUpdateModal').on('click', function(e) { if (e.target === this) closeWorkUpdateModal(); });
+
+    $('#workUpdateForm').on('submit', function(e) {
+      e.preventDefault();
+      var $btn = $('#wuSubmitBtn');
+      $btn.prop('disabled', true);
+      $('#wuMsg').hide();
+
+      var payload = {
+        date: $('#wuDate').val(),
+        report: $('#wuReport').val().trim()
+      };
+
+      $.ajax({
+        url: '{{ route("employee.daily-work-updates.store") }}',
+        method: 'POST',
+        data: payload
+      }).done(function(resp) {
+        if (resp.success) {
+          closeWorkUpdateModal();
+          loadWorkUpdates();
+        }
+      }).fail(function(xhr) {
+        var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Failed to save.';
+        $('#wuMsg').removeClass('text-success').addClass('text-danger').text(msg).show();
+      }).always(function() {
+        $btn.prop('disabled', false);
+      });
+    });
+
+    function deleteWorkUpdate(id) {
+      if (!confirm('Delete this work update?')) return;
+      $.ajax({
+        url: '{{ route("employee.daily-work-updates.delete") }}',
+        method: 'POST',
+        data: { id: id }
+      }).done(function() {
+        loadWorkUpdates();
+      });
+    }
+  </script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {

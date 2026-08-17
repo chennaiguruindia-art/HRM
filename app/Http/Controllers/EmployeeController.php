@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\DailyWorkUpdate;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\Notification;
@@ -300,7 +301,7 @@ class EmployeeController extends Controller
     {
         $request->validate([
             'employee_id' => 'required|string',
-            'daily_report' => 'required|string',
+            'daily_report' => 'nullable|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'location_name' => 'nullable|string|max:255',
@@ -419,5 +420,62 @@ class EmployeeController extends Controller
         return response()->json([
             'address' => $address,
         ]);
+    }
+
+    public function dailyWorkUpdates(Request $request): JsonResponse
+    {
+        $employeeId = $request->session()->get('employee_id');
+        if (!$employeeId) {
+            return response()->json(['success' => false, 'message' => 'Not logged in.'], 401);
+        }
+
+        $updates = DailyWorkUpdate::where('employee_id', $employeeId)
+            ->latest('date')
+            ->latest('id')
+            ->get()
+            ->map(function ($u) {
+                return [
+                    'id' => $u->id,
+                    'date' => $u->date->toDateString(),
+                    'report' => $u->report,
+                    'updated_at' => $u->updated_at->format('Y-m-d H:i'),
+                ];
+            });
+
+        return response()->json($updates);
+    }
+
+    public function storeDailyWorkUpdate(Request $request): JsonResponse
+    {
+        $employeeId = $request->session()->get('employee_id');
+        if (!$employeeId) {
+            return response()->json(['success' => false, 'message' => 'Not logged in.'], 401);
+        }
+
+        $data = $request->validate([
+            'date' => 'required|date',
+            'report' => 'required|string',
+        ]);
+
+        DailyWorkUpdate::updateOrCreate(
+            ['employee_id' => $employeeId, 'date' => $data['date']],
+            ['report' => $data['report']]
+        );
+
+        return response()->json(['success' => true]);
+    }
+
+    public function deleteDailyWorkUpdate(Request $request): JsonResponse
+    {
+        $employeeId = $request->session()->get('employee_id');
+        if (!$employeeId) {
+            return response()->json(['success' => false, 'message' => 'Not logged in.'], 401);
+        }
+
+        DailyWorkUpdate::where('id', $request->id)
+            ->where('employee_id', $employeeId)
+            ->delete();
+
+        return response()->json(['success' => true]);
     }
 }
