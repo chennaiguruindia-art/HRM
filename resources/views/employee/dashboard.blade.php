@@ -532,11 +532,24 @@
       color: #4147a8;
     }
 
-    .avatar-sm {
+    .avatar-letter {
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      object-fit: cover;
+      background: var(--accent);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .avatar-letter.avatar-lg {
+      width: 64px;
+      height: 64px;
+      font-size: 1.5rem;
     }
 
     .btn-accent {
@@ -769,7 +782,7 @@
           <div class="icon-btn" data-view="notifications"><i class="bi bi-bell"></i>@if($unreadNotifications > 0)<span class="dot" id="topEmpNotifDot"></span>@endif</div>
           <div class="user-menu">
             <button class="user-menu-btn" id="userMenuBtn" type="button">
-              <img src="{{ $photo }}" alt="{{ $employee->name }}">
+              <div class="avatar-letter">{{ substr($employee->name, 0, 1) }}</div>
               <span class="user-menu-name">{{ $employee->name }}</span>
               <i class="bi bi-chevron-down small"></i>
             </button>

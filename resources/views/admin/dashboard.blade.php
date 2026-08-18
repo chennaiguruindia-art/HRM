@@ -2122,23 +2122,49 @@
       const btn = field === "check_in" ? $("#saveCheckInBtn") : $("#saveCheckOutBtn");
       btn.prop("disabled", true);
 
-      apiPost(API.attendanceUpdate, {
-        employee_id: $("#attEmpId").val(),
-        date: $("#attDateEdit").val(),
-        field: field,
-        time: time
-      }).done(function(resp) {
-        $msg.addClass("text-success").text(resp.message || (field === "check_in" ? "Check-in updated." : "Check-out updated."));
-        setTimeout(function() {
-          bootstrap.Modal.getInstance(document.getElementById("attendanceEditModal")).hide();
-          loadAttendance("daily");
-        }, 900);
-      }).fail(function(xhr) {
-        const m = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "Failed to update attendance.";
-        $msg.addClass("text-danger").text(m);
-      }).always(function() {
-        btn.prop("disabled", false);
-      });
+      function sendEdit(locationData) {
+        var payload = {
+          employee_id: $("#attEmpId").val(),
+          date: $("#attDateEdit").val(),
+          field: field,
+          time: time
+        };
+        if (locationData) {
+          payload.edited_lat = locationData.lat;
+          payload.edited_lng = locationData.lng;
+          payload.edited_location_name = locationData.name;
+        }
+
+        apiPost(API.attendanceUpdate, payload).done(function(resp) {
+          $msg.addClass("text-success").text(resp.message || (field === "check_in" ? "Check-in updated." : "Check-out updated."));
+          setTimeout(function() {
+            bootstrap.Modal.getInstance(document.getElementById("attendanceEditModal")).hide();
+            loadAttendance("daily");
+          }, 900);
+        }).fail(function(xhr) {
+          const m = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "Failed to update attendance.";
+          $msg.addClass("text-danger").text(m);
+        }).always(function() {
+          btn.prop("disabled", false);
+        });
+      }
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          var lat = pos.coords.latitude;
+          var lng = pos.coords.longitude;
+          var name = "";
+          $.getJSON("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lng, function(data) {
+            name = data.display_name || "";
+          }).always(function() {
+            sendEdit({ lat: lat, lng: lng, name: name });
+          });
+        }, function() {
+          sendEdit(null);
+        }, { timeout: 5000, maximumAge: 60000 });
+      } else {
+        sendEdit(null);
+      }
     });
 
     function getAttendanceTableData() {

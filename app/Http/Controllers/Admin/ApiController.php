@@ -409,6 +409,9 @@ class ApiController extends Controller
             'date' => 'required|date',
             'field' => 'required|in:check_in,check_out',
             'time' => 'required|date_format:H:i',
+            'edited_lat' => 'nullable|numeric',
+            'edited_lng' => 'nullable|numeric',
+            'edited_location_name' => 'nullable|string|max:255',
         ]);
 
         $employee = Employee::where('employee_id', $request->employee_id)->firstOrFail();
@@ -457,6 +460,10 @@ class ApiController extends Controller
                 'check_out' => $checkOut,
                 'status' => $status,
                 'notes' => 'Manually updated by admin',
+                'edited_lat' => $request->edited_lat,
+                'edited_lng' => $request->edited_lng,
+                'edited_location_name' => $request->edited_location_name,
+                'edited_by' => auth()->id(),
             ]
         );
 

@@ -19,6 +19,10 @@ class Attendance extends Model
         'latitude',
         'longitude',
         'location_name',
+        'edited_lat',
+        'edited_lng',
+        'edited_location_name',
+        'edited_by',
     ];
 
     protected function casts(): array
