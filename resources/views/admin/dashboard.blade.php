@@ -419,12 +419,6 @@
       color: #4147a8;
     }
 
-    .avatar-sm {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
 
     .btn-accent {
       background: var(--accent);
@@ -1452,14 +1446,6 @@
               </div>
             </div>
 
-            <div class="d-flex align-items-center gap-3 mb-3">
-              <img id="photoPreview" src="https://i.pravatar.cc/100?img=68" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;border:1px solid var(--line);">
-              <div>
-                <label class="form-label small mb-1 d-block">Profile Photo</label>
-                <input type="file" class="form-control form-control-sm" id="photoInput" name="photo" accept="image/*" style="max-width:240px;">
-              </div>
-            </div>
-
             <div class="row">
               <div class="col-md-6 mb-3"><label class="form-label small">Full Name</label><input required class="form-control" name="name"></div>
               <div class="col-md-6 mb-3"><label class="form-label small">Email</label><input required type="email" class="form-control" name="email"></div>
@@ -1796,7 +1782,7 @@
       $("#employeesBody").html(rows.map(function(e) {
         return "<tr>" +
           "<td class='mono small text-muted'>" + e.id + "</td>" +
-          "<td><div class='d-flex align-items-center gap-2'><img class='avatar-sm' src='" + e.img + "'><div><div class='fw-semibold'>" + e.name + "</div></div></div></td>" +
+          "<td>" + e.name + "</td>" +
           "<td>" + e.designation + "</td>" +
           "<td>" + e.branch + "</td>" +
           "<td class='mono small'>" + fmtTime(e.shiftStart) + " - " + fmtTime(e.shiftEnd) + "</td>" +
@@ -1840,8 +1826,6 @@
       });
     }
     let editingEmployeeId = null;
-    let pendingPhotoDataUrl = null;
-
     function populateBranchSelect() {
       const source = (branchesCache && branchesCache.length) ? branchesCache : [];
       $("#empBranchSelect").html(source.map(function(b) {
@@ -1863,7 +1847,6 @@
     function openEmployeeModal(employee) {
       const form = document.getElementById("employeeForm");
       form.reset();
-      pendingPhotoDataUrl = null;
       populateBranchSelect();
       populateDesignationSelect(employee ? employee.designation : null);
 
@@ -1885,12 +1868,10 @@
         form.blood_group.value = employee.blood_group || "";
         form.salary.value = employee.salary;
         form.paid_leaves.value = employee.paid_leaves || 1;
-        $("#photoPreview").attr("src", employee.img);
       } else {
         editingEmployeeId = null;
         $("#employeeModalTitle").text("Add Employee");
         $("#employeeSubmitBtn").text("Save Employee");
-        $("#photoPreview").attr("src", "https://i.pravatar.cc/100?img=68");
       }
       new bootstrap.Modal(document.getElementById("employeeModal")).show();
     }
@@ -1901,17 +1882,6 @@
       });
       if (emp) openEmployeeModal(emp);
     }
-
-    $("#photoInput").on("change", function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        pendingPhotoDataUrl = ev.target.result;
-        $("#photoPreview").attr("src", pendingPhotoDataUrl);
-      };
-      reader.readAsDataURL(file);
-    });
 
     $("input[name='dob']").on("change", function() {
       const dob = new Date($(this).val());
@@ -2000,7 +1970,7 @@
       $("#employeeListBody").html(rows.map(function(e) {
         return "<tr>" +
           "<td class='mono small text-muted'>" + e.id + "</td>" +
-          "<td><div class='d-flex align-items-center gap-2'><img class='avatar-sm' src='" + e.img + "'><div><div class='fw-semibold'>" + e.name + "</div></div></div></td>" +
+          "<td>" + e.name + "</td>" +
           "<td>" + e.designation + "</td>" +
           "<td>" + e.branch + "</td>" +
           "<td class='mono small'>" + fmtTime(e.shiftStart) + " - " + fmtTime(e.shiftEnd) + "</td>" +
@@ -2528,7 +2498,7 @@
       }
       $("#salaryBody").html(rows.map(function(s) {
         return "<tr>" +
-          "<td><div class='d-flex align-items-center gap-2'><img class='avatar-sm' src='" + s.employee_img + "'><div><div class='fw-semibold'>" + s.employee_name + "</div></div></div></td>" +
+          "<td>" + s.employee_name + "</td>" +
           "<td class='mono'>" + fmtMonthLabel(s.month) + "</td>" +
           "<td class='mono'>" + fmtSalary(s.base_salary) + "</td>" +
           "<td>" + s.absent_days + "</td>" +
@@ -2814,7 +2784,7 @@
       $("#reportEmployeesBody").html(rows.map(function(e) {
         return "<tr>" +
           "<td class='mono small text-muted'>" + e.id + "</td>" +
-          "<td><div class='d-flex align-items-center gap-2'><img class='avatar-sm' src='" + e.img + "'><div class='fw-semibold'>" + e.name + "</div></div></td>" +
+          "<td>" + e.name + "</td>" +
           "<td>" + e.designation + "</td>" +
           "<td class='text-muted small'>" + e.email + "</td>" +
           "<td>" + statusPill(e.status) + "</td>" +
