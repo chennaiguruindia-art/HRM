@@ -559,6 +559,17 @@
       border-radius: 8px;
     }
 
+    .sidebar-close {
+      display: none;
+      margin-left: auto;
+      background: transparent;
+      border: none;
+      color: #5b6278;
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+
     /* ── Bottom Nav (mobile) ── */
     .bottom-nav {
       display: none;

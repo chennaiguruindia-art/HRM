@@ -29,10 +29,10 @@ class DatabaseSeeder extends Seeder
         );
 
         $branches = [
-            ['name' => 'Chennai', 'location' => 'Chennai, Tamil Nadu', 'manager' => 'Manoj', 'phone' => '9000000001', 'email' => 'chennaigurugroup@gmail.com'],
-            ['name' => 'Bangalore', 'location' => 'Bangalore, Karnataka', 'manager' => 'Ravi', 'phone' => '9000000002', 'email' => 'bangloregurugroup@gmail.com'],
-            ['name' => 'Hyderabad', 'location' => 'Hyderabad, Telangana', 'manager' => 'Suresh', 'phone' => '9000000003', 'email' => 'hydrabadgurugroup@gmail.com'],
-            ['name' => 'Coimbatore', 'location' => 'Coimbatore, Tamil Nadu', 'manager' => 'Karthik', 'phone' => '9000000004', 'email' => 'coimbatoregurugroup@gmail.com'],
+            ['name' => 'Chennai', 'location' => 'Chennai, Tamil Nadu', 'manager' => 'Abirami', 'phone' => '9176512434', 'email' => 'chennaigurugroup@gmail.com'],
+            ['name' => 'Bangalore', 'location' => 'Bangalore, Karnataka', 'manager' => 'Punith', 'phone' => '9000000002', 'email' => 'bangloregurugroup@gmail.com'],
+            ['name' => 'Hyderabad', 'location' => 'Hyderabad, Telangana', 'manager' => 'Rajesh', 'phone' => '9000000003', 'email' => 'hydrabadgurugroup@gmail.com'],
+            ['name' => 'Coimbatore', 'location' => 'Coimbatore, Tamil Nadu', 'manager' => 'Sathish', 'phone' => '9000000004', 'email' => 'coimbatoregurugroup@gmail.com'],
         ];
 
         foreach ($branches as $data) {
