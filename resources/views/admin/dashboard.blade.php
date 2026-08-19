@@ -559,21 +559,54 @@
       border-radius: 8px;
     }
 
+    /* ── Bottom Nav (mobile) ── */
+    .bottom-nav {
+      display: none;
+    }
+
     @media(max-width:991px) {
       .sidebar {
         position: fixed;
-        left: -264px;
+        left: -280px;
         z-index: 60;
-        transition: left .2s ease;
+        transition: left .25s cubic-bezier(.4,0,.2,1);
+        width: 280px;
       }
 
       .sidebar.open {
         left: 0;
+        box-shadow: 8px 0 32px rgba(10,12,30,.18);
+      }
+
+      .sidebar-close {
+        display: inline-flex;
+      }
+
+      .content {
+        width: 100%;
       }
 
       .topbar {
+        padding: 8px 14px;
+        position: sticky;
+        top: 0;
+        z-index: 40;
         flex-wrap: wrap;
-        row-gap: 10px;
+        row-gap: 8px;
+        box-shadow: 0 1px 0 var(--line), 0 2px 8px rgba(10,12,30,.05);
+      }
+
+      .topbar .page-title {
+        font-size: 1rem;
+        line-height: 1.2;
+      }
+
+      .topbar .page-sub {
+        font-size: .72rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
       }
 
       .search-box {
@@ -581,35 +614,145 @@
         flex-basis: 100%;
         max-width: none;
         margin-left: 0;
+        margin-top: 2px;
+      }
+
+      .search-box input {
+        padding: 6px 12px 6px 32px;
+        font-size: .8rem;
+      }
+
+      .main {
+        padding: 16px 14px 90px;
+      }
+
+      /* Stat cards: smaller on mobile */
+      .stat-card {
+        padding: 14px 12px;
+        gap: 10px;
+      }
+
+      .stat-ic {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
+        flex-shrink: 0;
+      }
+
+      .stat-num {
+        font-size: 1.15rem;
+      }
+
+      .stat-label {
+        font-size: .7rem;
+      }
+
+      .section-card {
+        padding: 16px 14px;
+      }
+
+      /* Horizontal scroll for tables on mobile */
+      .section-card, .card-flat {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Bottom Nav */
+      .bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        background: #fff;
+        border-top: 1px solid var(--line);
+        box-shadow: 0 -4px 20px rgba(10,12,30,.08);
+        padding: 6px 0 env(safe-area-inset-bottom, 6px);
+        justify-content: space-around;
+        align-items: flex-end;
+      }
+
+      .bn-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        padding: 6px 8px;
+        cursor: pointer;
+        flex: 1;
+        position: relative;
+        border: none;
+        background: transparent;
+        color: var(--text-soft);
+        transition: color .2s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .bn-item i {
+        font-size: 1.35rem;
+        line-height: 1;
+        transition: transform .2s cubic-bezier(.34,1.56,.64,1);
+      }
+
+      .bn-item span {
+        font-size: .58rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+
+      .bn-item.active {
+        color: var(--accent);
+      }
+
+      .bn-item.active i {
+        transform: translateY(-2px) scale(1.12);
+      }
+
+      .bn-item .bn-badge {
+        position: absolute;
+        top: 2px;
+        right: calc(50% - 18px);
+        background: var(--coral);
+        color: #fff;
+        font-size: .55rem;
+        font-weight: 700;
+        border-radius: 20px;
+        padding: 1px 5px;
+        min-width: 16px;
+        text-align: center;
+        border: 2px solid #fff;
+      }
+
+      .bn-item.active::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 28px;
+        height: 3px;
+        background: var(--accent);
+        border-radius: 0 0 4px 4px;
       }
     }
 
-    .sidebar-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 12, 20, .5);
-      z-index: 55;
-    }
+    @media(max-width:480px) {
+      .topbar .page-sub {
+        display: none !important;
+      }
 
-    .sidebar-overlay.show {
-      display: block;
-    }
+      .bn-item {
+        padding: 6px 4px;
+      }
 
-    .sidebar-close {
-      display: none;
-      margin-left: auto;
-      background: transparent;
-      border: none;
-      color: #5b6278;
-      font-size: 1.25rem;
-      line-height: 1;
-      cursor: pointer;
-    }
+      .bn-item i {
+        font-size: 1.2rem;
+      }
 
-    @media(max-width:991px) {
-      .sidebar-close {
-        display: inline-flex;
+      .bn-item span {
+        font-size: .55rem;
       }
     }
 
@@ -702,20 +845,48 @@
     <div class="content">
 
       <div class="topbar">
-        <button class="btn btn-ghost d-lg-none" id="burgerBtn"><i class="bi bi-list"></i></button>
-        <div>
-          <p class="page-title" id="pageTitle">Dashboard</p>
-          <p class="page-sub" id="pageSub">Overview of your organization today</p>
+        <button class="btn btn-ghost d-lg-none" id="burgerBtn" style="border:1px solid var(--line);background:var(--surface);flex-shrink:0;"><i class="bi bi-list"></i></button>
+        <div class="d-flex align-items-center gap-2" style="min-width:0;">
+          <img src="{{ asset('logo/guru.png') }}" alt="Guru" class="d-lg-none" style="height:30px;width:auto;object-fit:contain;flex-shrink:0;">
+          <div style="min-width:0;">
+            <p class="page-title" id="pageTitle">Dashboard</p>
+            <p class="page-sub" id="pageSub">Overview of your organization today</p>
+          </div>
         </div>
         <div class="search-box">
           <i class="bi bi-search"></i>
           <input type="text" id="globalSearch" placeholder="Search this page...">
         </div>
         <div class="ms-auto d-flex align-items-center gap-2">
-          <div class="icon-btn" data-view="notifications"><i class="bi bi-bell"></i><span class="dot" id="topNotifDot" style="display:none;"></span></div>
-          <img src="{{ asset('logo/guru.png') }}" style="height:32px;width:auto;object-fit:contain;" alt="Guru Group">
+          <div class="icon-btn" data-view="notifications" style="cursor:pointer;"><i class="bi bi-bell"></i><span class="dot" id="topNotifDot" style="display:none;"></span></div>
+          <img src="{{ asset('logo/guru.png') }}" class="d-none d-lg-block" style="height:32px;width:auto;object-fit:contain;" alt="Guru Group">
         </div>
       </div>
+
+      {{-- ===== BOTTOM NAVIGATION (mobile only) ===== --}}
+      <nav class="bottom-nav" id="bottomNav">
+        <button class="bn-item active" data-view="dashboard">
+          <i class="bi bi-grid-1x2-fill"></i>
+          <span>Home</span>
+        </button>
+        <button class="bn-item" data-view="{{ $isBranchAdmin ? 'employees' : 'branches' }}">
+          <i class="bi {{ $isBranchAdmin ? 'bi-people-fill' : 'bi-building' }}"></i>
+          <span>{{ $isBranchAdmin ? 'Employees' : 'Branches' }}</span>
+        </button>
+        <button class="bn-item" data-view="reports">
+          <i class="bi bi-file-earmark-bar-graph-fill"></i>
+          <span>Reports</span>
+        </button>
+        <button class="bn-item" data-view="notifications">
+          <i class="bi bi-bell-fill"></i>
+          <span>Alerts</span>
+          <span class="bn-badge" id="bnAdminNotifBadge" style="display:none;"></span>
+        </button>
+        <button class="bn-item" id="bnAdminMoreBtn">
+          <i class="bi bi-grid"></i>
+          <span>More</span>
+        </button>
+      </nav>
 
       <main class="main" id="mainArea">
 
@@ -1688,6 +1859,14 @@
       $("#globalSearch").val("");
       $(".view table.tbl tbody tr").show();
 
+      /* sync bottom nav */
+      $(".bn-item[data-view]").removeClass("active");
+      $(".bn-item[data-view='" + viewName + "']").addClass("active");
+
+      /* scroll to top */
+      $("#mainArea").scrollTop(0);
+      window.scrollTo(0, 0);
+
       if (viewName === "dashboard") loadDashboard();
       if (viewName === "employees") loadEmployees();
       if (viewName === "employee-list") loadEmployeeList();
@@ -1710,6 +1889,11 @@
     $(document).on("click", "[data-view]", function(e) {
       e.preventDefault();
       goTo($(this).data("view"));
+    });
+
+    /* bottom nav "More" button opens sidebar */
+    $("#bnAdminMoreBtn").on("click", function() {
+      openSidebar();
     });
 
     /* ---- Mobile sidebar open / close ---- */
@@ -2365,6 +2549,11 @@
       }).length;
       $("#notifBadge").text(unread);
       $("#topNotifDot").toggle(unread > 0);
+      if (unread > 0) {
+        $("#bnAdminNotifBadge").text(unread).show();
+      } else {
+        $("#bnAdminNotifBadge").hide();
+      }
     }
     $("#markAllReadBtn").on("click", function() {
       var $btn = $(this);
