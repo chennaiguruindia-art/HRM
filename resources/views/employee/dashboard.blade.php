@@ -706,20 +706,247 @@
       font-family: 'Sora', sans-serif;
     }
 
+    /* ── Bottom Nav (mobile) ── */
+    .bottom-nav {
+      display: none;
+    }
+
     @media(max-width:991px) {
+      /* Sidebar slide-in */
       .sidebar {
         position: fixed;
-        left: -264px;
+        left: -280px;
         z-index: 60;
-        transition: left .2s ease;
+        transition: left .25s cubic-bezier(.4,0,.2,1);
+        width: 280px;
       }
 
       .sidebar.open {
         left: 0;
+        box-shadow: 8px 0 32px rgba(10,12,30,.18);
       }
 
       .sidebar-close {
         display: inline-flex;
+      }
+
+      /* Main content takes full width */
+      .content {
+        width: 100%;
+      }
+
+      /* Topbar overhaul */
+      .topbar {
+        padding: 0 14px;
+        height: 60px;
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        box-shadow: 0 1px 0 var(--line), 0 2px 8px rgba(10,12,30,.05);
+      }
+
+      /* Hide desktop user-menu name & chevron on mobile */
+      .topbar .user-menu-name,
+      .topbar .user-menu-btn .bi-chevron-down {
+        display: none !important;
+      }
+
+      /* Compact user-menu-btn on mobile: just avatar */
+      .topbar .user-menu-btn {
+        padding: 4px;
+        border-radius: 50%;
+        border: 2px solid var(--line);
+        background: var(--surface);
+        width: 38px;
+        height: 38px;
+        justify-content: center;
+      }
+
+      /* Icon btn sizing */
+      .topbar .icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+      }
+
+      /* Page title compact */
+      .topbar .page-title {
+        font-size: 1rem;
+      }
+
+      .topbar .page-sub {
+        font-size: .72rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
+      }
+
+      /* Burger button */
+      #burgerBtn {
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+      }
+
+      /* Main area padding */
+      .main {
+        padding: 16px 14px 90px;
+      }
+
+      /* Stat cards: smaller on mobile */
+      .stat-card {
+        padding: 14px 12px;
+        gap: 10px;
+      }
+
+      .stat-ic {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
+        flex-shrink: 0;
+      }
+
+      .stat-num {
+        font-size: 1.15rem;
+      }
+
+      .stat-label {
+        font-size: .7rem;
+      }
+
+      /* Section cards */
+      .section-card {
+        padding: 16px 14px;
+      }
+
+      /* Tables: horizontal scroll */
+      .tbl-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Profile */
+      .profile-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      /* Salary grid */
+      .salary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      /* Detail grid */
+      .detail-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      /* Bottom Nav */
+      .bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        background: #fff;
+        border-top: 1px solid var(--line);
+        box-shadow: 0 -4px 20px rgba(10,12,30,.08);
+        padding: 6px 0 env(safe-area-inset-bottom, 6px);
+        justify-content: space-around;
+        align-items: flex-end;
+      }
+
+      .bn-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        padding: 6px 10px;
+        cursor: pointer;
+        flex: 1;
+        position: relative;
+        border: none;
+        background: transparent;
+        color: var(--text-soft);
+        transition: color .2s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .bn-item i {
+        font-size: 1.35rem;
+        line-height: 1;
+        transition: transform .2s cubic-bezier(.34,1.56,.64,1);
+      }
+
+      .bn-item span {
+        font-size: .58rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+
+      .bn-item.active {
+        color: var(--accent);
+      }
+
+      .bn-item.active i {
+        transform: translateY(-2px) scale(1.12);
+      }
+
+      .bn-item .bn-badge {
+        position: absolute;
+        top: 2px;
+        right: calc(50% - 18px);
+        background: var(--coral);
+        color: #fff;
+        font-size: .55rem;
+        font-weight: 700;
+        border-radius: 20px;
+        padding: 1px 5px;
+        min-width: 16px;
+        text-align: center;
+        border: 2px solid #fff;
+      }
+
+      /* Active pill indicator above bottom nav icon */
+      .bn-item.active::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 28px;
+        height: 3px;
+        background: var(--accent);
+        border-radius: 0 0 4px 4px;
+      }
+    }
+
+    /* Extra small phones */
+    @media(max-width:480px) {
+      .topbar .page-sub {
+        max-width: 110px;
+      }
+
+      .bn-item {
+        padding: 6px 6px;
+      }
+
+      .bn-item i {
+        font-size: 1.2rem;
+      }
+
+      .bn-item span {
+        font-size: .55rem;
       }
     }
   </style>
@@ -772,16 +999,36 @@
     <div class="content">
 
       <div class="topbar">
-        <button class="btn btn-ghost d-lg-none" id="burgerBtn" style="border:1px solid var(--line);background:var(--surface);"><i class="bi bi-list"></i></button>
-        <div>
-          <p class="page-title" id="pageTitle">Dashboard</p>
-          <p class="page-sub" id="pageSub">Welcome back, {{ $employee->name }}</p>
+        {{-- Burger (mobile only) --}}
+        <button class="btn btn-ghost d-lg-none" id="burgerBtn"
+          style="border:1px solid var(--line);background:var(--surface);flex-shrink:0;">
+          <i class="bi bi-list"></i>
+        </button>
+
+        {{-- Logo + Title --}}
+        <div class="d-flex align-items-center gap-2" style="min-width:0;">
+          {{-- Logo visible only on mobile --}}
+          <img src="{{ asset('logo/guru.png') }}" alt="Guru" class="d-lg-none" style="height:30px;width:auto;object-fit:contain;flex-shrink:0;">
+          <div style="min-width:0;">
+            <p class="page-title" id="pageTitle" style="line-height:1.2;">Dashboard</p>
+            <p class="page-sub d-none d-sm-block" id="pageSub">Welcome back, {{ $employee->name }}</p>
+          </div>
         </div>
-        <div class="ms-auto d-flex align-items-center gap-3">
-          <div class="icon-btn" data-view="notifications"><i class="bi bi-bell"></i>@if($unreadNotifications > 0)<span class="dot" id="topEmpNotifDot"></span>@endif</div>
+
+        {{-- Right actions --}}
+        <div class="ms-auto d-flex align-items-center gap-2">
+          {{-- Notifications --}}
+          <div class="icon-btn" id="topNotifBtn" data-view="notifications" style="cursor:pointer;">
+            <i class="bi bi-bell"></i>
+            @if($unreadNotifications > 0)
+              <span class="dot" id="topEmpNotifDot"></span>
+            @endif
+          </div>
+
+          {{-- User menu (avatar only on mobile, full on desktop) --}}
           <div class="user-menu">
             <button class="user-menu-btn" id="userMenuBtn" type="button">
-              <div class="avatar-letter">{{ substr($employee->name, 0, 1) }}</div>
+              <div class="avatar-letter" style="width:32px;height:32px;font-size:.85rem;">{{ substr($employee->name, 0, 1) }}</div>
               <span class="user-menu-name">{{ $employee->name }}</span>
               <i class="bi bi-chevron-down small"></i>
             </button>
@@ -793,11 +1040,42 @@
                   <div class="small" style="color:var(--text-soft);">{{ $employee->employee_id }}@if($employee->designation) &middot; {{ $employee->designation }}@endif</div>
                 </div>
               </div>
+              <a href="#" class="user-menu-item" data-view="profile" style="color:var(--text);"><i class="bi bi-person"></i> My Profile</a>
               <a href="#" class="user-menu-item logout logout-link"><i class="bi bi-box-arrow-right"></i> Logout</a>
             </div>
           </div>
         </div>
       </div>
+
+      {{-- ===== BOTTOM NAVIGATION (mobile only) ===== --}}
+      <nav class="bottom-nav" id="bottomNav">
+        <button class="bn-item active" data-view="dashboard">
+          <i class="bi bi-grid-1x2-fill"></i>
+          <span>Home</span>
+        </button>
+        <button class="bn-item" data-view="attendance">
+          <i class="bi bi-calendar2-check-fill"></i>
+          <span>Attendance</span>
+        </button>
+        <button class="bn-item" data-view="leave">
+          <i class="bi bi-file-earmark-text-fill"></i>
+          <span>Leave</span>
+          @if($pendingLeaves->count() > 0)
+            <span class="bn-badge">{{ $pendingLeaves->count() }}</span>
+          @endif
+        </button>
+        <button class="bn-item" data-view="notifications">
+          <i class="bi bi-bell-fill"></i>
+          <span>Alerts</span>
+          @if($unreadNotifications > 0)
+            <span class="bn-badge" id="bnNotifBadge">{{ $unreadNotifications }}</span>
+          @endif
+        </button>
+        <button class="bn-item" id="bnMoreBtn">
+          <i class="bi bi-grid"></i>
+          <span>More</span>
+        </button>
+      </nav>
 
       <main class="main" id="mainArea">
 
@@ -1432,11 +1710,44 @@
       $('#sidebarOverlay').removeClass('show');
       if (name === 'reports') loadEmpReports();
       if (name === 'work-update') loadWorkUpdates();
+
+      /* sync bottom nav */
+      $('.bn-item[data-view]').removeClass('active');
+      $('.bn-item[data-view="' + name + '"]').addClass('active');
+
+      /* scroll to top on view change */
+      $('#mainArea').scrollTop(0);
+      window.scrollTo(0, 0);
     }
 
     $(document).on('click', '.side-link[data-view]', function() {
       switchView($(this).data('view'));
     });
+
+    /* bottom nav items */
+    $(document).on('click', '.bn-item[data-view]', function() {
+      switchView($(this).data('view'));
+    });
+
+    /* bottom nav "More" opens sidebar */
+    $('#bnMoreBtn').on('click', function() {
+      $('#sidebar').addClass('open');
+      $('#sidebarOverlay').addClass('show');
+    });
+
+    /* topbar notification icon */
+    $('#topNotifBtn').on('click', function() {
+      switchView('notifications');
+    });
+
+    /* profile link in user-menu dropdown */
+    $(document).on('click', '.user-menu-item[data-view]', function(e) {
+      e.preventDefault();
+      var v = $(this).data('view');
+      $('#userMenuDropdown').removeClass('open');
+      switchView(v);
+    });
+
 
     /* ---------------- Daily Reports ---------------- */
     function empReportPill(status) {
