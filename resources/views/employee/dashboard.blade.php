@@ -583,11 +583,10 @@
       flex-wrap: wrap;
     }
 
-    .profile-head img.avatar {
+    .profile-head .avatar-letter {
       width: 92px;
       height: 92px;
-      border-radius: 50%;
-      object-fit: cover;
+      font-size: 2rem;
       border: 3px solid rgba(79, 91, 213, .4);
     }
 
@@ -788,7 +787,7 @@
             </button>
             <div class="user-menu-dropdown" id="userMenuDropdown">
               <div class="user-menu-head">
-                <img src="{{ $photo }}" alt="{{ $employee->name }}">
+                <div class="avatar-letter">{{ substr($employee->name, 0, 1) }}</div>
                 <div>
                   <div class="fw-semibold" style="font-size:.86rem;">{{ $employee->name }}</div>
                   <div class="small" style="color:var(--text-soft);">{{ $employee->employee_id }}@if($employee->designation) &middot; {{ $employee->designation }}@endif</div>
@@ -921,7 +920,7 @@
         <section class="view" id="view-profile">
           <div class="section-card">
             <div class="profile-head">
-              <img src="{{ $photo }}" class="avatar" alt="{{ $employee->name }}">
+              <div class="avatar-letter avatar-lg">{{ substr($employee->name, 0, 1) }}</div>
               <div>
                 <div class="p-name">{{ $employee->name }}</div>
                 <div class="p-role">{{ $employee->designation }}</div>

@@ -953,7 +953,9 @@
           <div class="section-card">
             <div class="section-head">
               <h5>Designation List</h5>
+              @if ($isBranchAdmin)
               <button class="btn btn-accent btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#designationModal"><i class="bi bi-plus-lg"></i> Add Designation</button>
+              @endif
             </div>
             <div class="table-responsive">
               <table class="tbl">
@@ -962,7 +964,9 @@
                     <th>Designation</th>
                     <th>Department</th>
                     <th>Employees</th>
+                    @if ($isBranchAdmin)
                     <th class="text-end">Actions</th>
+                    @endif
                   </tr>
                 </thead>
                 <tbody id="designationBody"></tbody>
@@ -1141,6 +1145,11 @@
           <div class="section-card">
             <div class="section-head">
               <h5>Daily Plan</h5>
+              @if (!$isBranchAdmin)
+              <select class="form-select form-select-sm ms-auto" id="dailyPlanBranchFilter" style="width:200px;">
+                <option value="">All Branches</option>
+              </select>
+              @endif
               @if ($isBranchAdmin)
               <button class="btn btn-accent btn-sm ms-auto" onclick="openDailyPlanModal()"><i class="bi bi-plus-lg"></i> Add Plan</button>
               @endif
@@ -1498,6 +1507,7 @@
   @endif
 
   <!-- ============ Designation Modal ============ -->
+  @if ($isBranchAdmin)
   <div class="modal fade" id="designationModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1518,6 +1528,7 @@
       </div>
     </div>
   </div>
+  @endif
 
   <!-- ============ Logout confirm modal ============ -->
   <div class="modal fade" id="logoutModal" tabindex="-1">
@@ -2299,13 +2310,18 @@
       $("#designationBody").html(skeletonRows(5, 4));
       apiGet(API.designations).then(function(rows) {
         $("#designationBody").html(rows.map(function(d) {
-          return "<tr><td class='fw-semibold'>" + d.title + "</td><td>" + d.department + "</td>" +
-            "<td class='mono'>" + d.count + "</td>" +
-            "<td class='text-end'><span class='action-ic me-1'><i class='bi bi-pencil-fill'></i></span>" +
-            "<span class='action-ic text-danger'><i class='bi bi-trash-fill'></i></span></td></tr>";
-        }).join(""));
+          var html = "<tr><td class='fw-semibold'>" + d.title + "</td><td>" + d.department + "</td>" +
+            "<td class='mono'>" + d.count + "</td>";
+          if (IS_BRANCH_ADMIN) {
+            html += "<td class='text-end'><span class='action-ic me-1'><i class='bi bi-pencil-fill'></i></span>" +
+              "<span class='action-ic text-danger'><i class='bi bi-trash-fill'></i></span></td>";
+          }
+          html += "</tr>";
+          return html;
+        }).join("")).catch;
       });
     }
+    if (IS_BRANCH_ADMIN) {
     $("#designationForm").on("submit", function(e) {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(this));
@@ -2315,6 +2331,7 @@
         bootstrap.Modal.getInstance(document.getElementById("designationModal")).hide();
       });
     });
+    }
 
     /* =========================================================================
        NOTIFICATIONS
@@ -2680,6 +2697,9 @@
 
     function loadDailyPlans() {
       $("#dailyPlanBody").html(skeletonRows(4, 15));
+      if (!IS_BRANCH_ADMIN && !$("#dailyPlanBranchFilter option:not(:first)").length) {
+        loadBranchesToDailyPlanFilter();
+      }
       apiGet(API.dailyPlans).then(function(rows) {
         dailyPlansCache = rows || [];
         renderDailyPlans(dailyPlansCache);
@@ -2688,7 +2708,35 @@
       });
     }
 
+    function loadBranchesToDailyPlanFilter() {
+      var src = (branchesCache && branchesCache.length) ? branchesCache : [];
+      if (!src.length) {
+        apiGet(API.branches).then(function(rows) {
+          branchesCache = rows || [];
+          populateDailyPlanFilter(branchesCache);
+        });
+      } else {
+        populateDailyPlanFilter(src);
+      }
+    }
+
+    function populateDailyPlanFilter(list) {
+      var val = $("#dailyPlanBranchFilter").val();
+      var html = '<option value="">All Branches</option>' + list.map(function(b) {
+        return '<option value="' + b.name + '">' + b.name + '</option>';
+      }).join("");
+      $("#dailyPlanBranchFilter").html(html).val(val);
+    }
+
+    $("#dailyPlanBranchFilter").on("change", function() {
+      renderDailyPlans(dailyPlansCache);
+    });
+
     function renderDailyPlans(rows) {
+      var filterBranch = $("#dailyPlanBranchFilter").val();
+      if (filterBranch) {
+        rows = rows.filter(function(p) { return p.branch === filterBranch; });
+      }
       if (!rows.length) {
         $("#dailyPlanBody").html('<tr><td colspan="' + (IS_BRANCH_ADMIN ? 15 : 16) + '" class="text-center text-muted py-4">No daily plans yet.</td></tr>');
         return;

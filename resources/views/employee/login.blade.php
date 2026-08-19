@@ -436,7 +436,7 @@
 
     <div class="emp-info" id="empInfo">
       <div class="top">
-        <img id="empImg" src="" alt="">
+        <div class="avatar-letter" id="empAvatar" style="width:48px;height:48px;font-size:1.2rem;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;text-transform:uppercase;flex-shrink:0;">-</div>
         <div>
           <div class="name" id="empName">-</div>
           <div class="role" id="empRole">-</div>
@@ -544,7 +544,7 @@
         }
       }).done(function(resp) {
         currentEmployeeId = resp.employee.id;
-        $('#empImg').attr('src', resp.employee.img);
+        $('#empAvatar').text(resp.employee.name.charAt(0).toUpperCase());
         $('#empName').text(resp.employee.name);
         $('#empRole').text(resp.employee.designation);
         $('#empBranch').text(resp.employee.branch);
