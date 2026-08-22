@@ -1845,16 +1845,39 @@
       $('#sidebarOverlay').removeClass('show');
     });
 
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
     $('#leaveForm').on('submit', function(e) {
       e.preventDefault();
       var $msg = $('#leaveMsg');
       $msg.removeClass('text-danger text-success').text('');
-      $.post('{{ route("employee.leave") }}', $(this).serialize())
+      var $form = $(this);
+      $.post('{{ route("employee.leave") }}', $form.serialize())
         .done(function(resp) {
-          $msg.addClass('text-success').text(resp.message);
-          setTimeout(function() {
-            location.reload();
-          }, 1200);
+          $msg.addClass('text-success').text(resp.message || 'Leave request submitted successfully.');
+          
+          var type = $form.find('select[name=type]').val();
+          var fromDate = $form.find('input[name=from_date]').val();
+          var toDate = $form.find('input[name=to_date]').val();
+          var reason = $form.find('textarea[name=reason]').val();
+
+          var newRow = '<tr>' +
+            '<td>' + escapeHtml(type) + '</td>' +
+            '<td class="mono">' + escapeHtml(fromDate) + ' &rarr; ' + escapeHtml(toDate) + '</td>' +
+            '<td>' + (reason ? escapeHtml(reason) : '—') + '</td>' +
+            '<td><span class="pill pill-amber">Pending</span></td>' +
+            '</tr>';
+
+          var $tbody = $('#view-leave table.tbl tbody');
+          if ($tbody.find('td[colspan]').length) {
+            $tbody.empty();
+          }
+          $tbody.prepend(newRow);
+
+          $form[0].reset();
+          setTimeout(function() { $msg.text(''); }, 3500);
         })
         .fail(function(xhr) {
           var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Failed to submit request.';

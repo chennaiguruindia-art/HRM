@@ -1694,13 +1694,14 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Add Designation</h5>
+          <h5 class="modal-title" id="designationModalTitle">Add Designation</h5>
           <button class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <form id="designationForm">
+          <input type="hidden" name="id" id="designationIdInput" value="">
           <div class="modal-body">
-            <div class="mb-3"><label class="form-label small">Designation Title</label><input required class="form-control" name="title"></div>
-            <div class="mb-3"><label class="form-label small">Department</label><input required class="form-control" name="department"></div>
+            <div class="mb-3"><label class="form-label small">Designation Title</label><input required class="form-control" name="title" id="designationTitleInput"></div>
+            <div class="mb-3"><label class="form-label small">Department</label><input required class="form-control" name="department" id="designationDeptInput"></div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
@@ -1793,6 +1794,8 @@
       leaveRequests: "{{ route('admin.api.leave-requests') }}",
       leaveAction: "{{ route('admin.api.leave-action') }}",
       designations: "{{ route('admin.api.designations') }}",
+      designationUpdate: "{{ route('admin.api.designations.update') }}",
+      designationDelete: "{{ route('admin.api.designations.delete') }}",
       notifications: "{{ route('admin.api.notifications') }}",
       markRead: "{{ route('admin.api.notifications.read') }}",
       sendNotification: "{{ route('admin.api.notifications.send') }}",
@@ -2504,28 +2507,72 @@
     function loadDesignations() {
       $("#designationBody").html(skeletonRows(5, 4));
       apiGet(API.designations).then(function(rows) {
+        designationsCache = rows || [];
         $("#designationBody").html(rows.map(function(d) {
-          var html = "<tr><td class='fw-semibold'>" + d.title + "</td><td>" + d.department + "</td>" +
+          var safeTitle = $("<div>").text(d.title).html();
+          var safeDept = $("<div>").text(d.department).html();
+          var html = "<tr><td class='fw-semibold'>" + safeTitle + "</td><td>" + safeDept + "</td>" +
             "<td class='mono'>" + d.count + "</td>";
           if (IS_BRANCH_ADMIN) {
-            html += "<td class='text-end'><span class='action-ic me-1'><i class='bi bi-pencil-fill'></i></span>" +
-              "<span class='action-ic text-danger'><i class='bi bi-trash-fill'></i></span></td>";
+            html += "<td class='text-end'>" +
+              "<span class='action-ic me-1 edit-desig-btn' data-id='" + d.id + "' data-title='" + safeTitle + "' data-dept='" + safeDept + "' title='Edit designation'><i class='bi bi-pencil-fill'></i></span>" +
+              "<span class='action-ic text-danger delete-desig-btn' data-id='" + d.id + "' data-title='" + safeTitle + "' title='Delete designation'><i class='bi bi-trash-fill'></i></span>" +
+              "</td>";
           }
           html += "</tr>";
           return html;
-        }).join("")).catch;
+        }).join(""));
       });
     }
     if (IS_BRANCH_ADMIN) {
-    $("#designationForm").on("submit", function(e) {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(this));
-      data.count = 0;
-      apiPost(API.designations, data).then(function() {
-        loadDesignations();
-        bootstrap.Modal.getInstance(document.getElementById("designationModal")).hide();
+      $(document).on("click", '[data-bs-target="#designationModal"]', function() {
+        $("#designationModalTitle").text("Add Designation");
+        $("#designationIdInput").val("");
+        $("#designationTitleInput").val("");
+        $("#designationDeptInput").val("");
       });
-    });
+
+      $(document).on("click", ".edit-desig-btn", function() {
+        var id = $(this).data("id");
+        var title = $(this).data("title");
+        var dept = $(this).data("dept");
+
+        $("#designationModalTitle").text("Edit Designation");
+        $("#designationIdInput").val(id);
+        $("#designationTitleInput").val(title);
+        $("#designationDeptInput").val(dept);
+
+        var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("designationModal"));
+        modal.show();
+      });
+
+      $(document).on("click", ".delete-desig-btn", function() {
+        var id = $(this).data("id");
+        var title = $(this).data("title");
+
+        if (confirm("Are you sure you want to delete designation '" + title + "'?")) {
+          apiPost(API.designationDelete, { id: id }).then(function() {
+            loadDesignations();
+            loadEmployees();
+            showMsg("Designation deleted successfully.", "info");
+          });
+        }
+      });
+
+      $("#designationForm").on("submit", function(e) {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(this));
+        const isUpdate = !!data.id;
+        const url = isUpdate ? API.designationUpdate : API.designations;
+
+        apiPost(url, data).then(function() {
+          loadDesignations();
+          loadEmployees();
+          showMsg(isUpdate ? "Designation updated and employee records synced!" : "Designation added!", "info");
+          var modal = bootstrap.Modal.getInstance(document.getElementById("designationModal"));
+          if (modal) modal.hide();
+        });
+      });
     }
 
     /* =========================================================================

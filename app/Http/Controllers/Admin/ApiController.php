@@ -591,6 +591,7 @@ class ApiController extends Controller
         $branchId = $this->branchScope();
         $designations = Designation::all()->map(function ($d) use ($branchId) {
             return [
+                'id' => $d->id,
                 'title' => $d->title,
                 'department' => $d->department,
                 'count' => Employee::where('designation', $d->title)
@@ -609,7 +610,46 @@ class ApiController extends Controller
             'department' => 'required|string|max:255',
         ]);
 
-        Designation::create($data);
+        Designation::create([
+            'title' => trim($data['title']),
+            'department' => trim($data['department']),
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function updateDesignation(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'id' => 'required|exists:designations,id',
+            'title' => 'required|string|max:255',
+            'department' => 'required|string|max:255',
+        ]);
+
+        $designation = Designation::findOrFail($data['id']);
+        $oldTitle = $designation->title;
+        $newTitle = trim($data['title']);
+
+        $designation->update([
+            'title' => $newTitle,
+            'department' => trim($data['department']),
+        ]);
+
+        if ($oldTitle !== $newTitle) {
+            Employee::where('designation', $oldTitle)
+                ->update(['designation' => $newTitle]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function deleteDesignation(Request $request): JsonResponse
+    {
+        $request->validate([
+            'id' => 'required|exists:designations,id',
+        ]);
+
+        Designation::destroy($request->id);
 
         return response()->json(['success' => true]);
     }

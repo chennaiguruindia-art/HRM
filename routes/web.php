@@ -41,6 +41,8 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::post('/leave-action', [App\Http\Controllers\Admin\ApiController::class, 'leaveAction'])->name('leave-action');
         Route::get('/designations', [App\Http\Controllers\Admin\ApiController::class, 'designations'])->name('designations');
         Route::post('/designations', [App\Http\Controllers\Admin\ApiController::class, 'storeDesignation'])->name('designations.store');
+        Route::post('/designations/update', [App\Http\Controllers\Admin\ApiController::class, 'updateDesignation'])->name('designations.update');
+        Route::post('/designations/delete', [App\Http\Controllers\Admin\ApiController::class, 'deleteDesignation'])->name('designations.delete');
         Route::get('/notifications', [App\Http\Controllers\Admin\ApiController::class, 'notifications'])->name('notifications');
         Route::post('/notifications/read', [App\Http\Controllers\Admin\ApiController::class, 'markRead'])->name('notifications.read');
         Route::post('/notifications/send', [App\Http\Controllers\Admin\ApiController::class, 'sendNotification'])->name('notifications.send');
