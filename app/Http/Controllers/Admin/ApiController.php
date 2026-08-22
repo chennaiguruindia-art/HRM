@@ -70,6 +70,8 @@ class ApiController extends Controller
 
     public function dashboardStats(): JsonResponse
     {
+        Attendance::processAutoClockOuts();
+
         $branchId = $this->branchScope();
         $empIds = $this->branchEmployeeIds();
 
@@ -519,18 +521,7 @@ class ApiController extends Controller
 
     private function attendanceStatus(Carbon $checkIn, ?Carbon $checkOut): string
     {
-        if ($checkIn->format('H:i') >= '12:00') {
-            return 'half-day';
-        }
-        if ($checkOut) {
-            if ($checkOut->format('H:i') < '13:30') {
-                return 'absent';
-            }
-            if ($checkOut->format('H:i') < self::SHIFT_END) {
-                return 'half-day';
-            }
-        }
-        return 'present';
+        return Attendance::calculateStatus($checkIn, $checkOut);
     }
 
     public function leaveRequests(): JsonResponse

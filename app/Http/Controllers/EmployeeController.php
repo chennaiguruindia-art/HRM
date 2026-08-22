@@ -23,6 +23,8 @@ class EmployeeController extends Controller
 
     public function dashboard(string $employeeId)
     {
+        Attendance::processAutoClockOuts();
+
         if (session('employee_id') !== $employeeId) {
             return redirect()->route('employee.login');
         }
@@ -211,6 +213,8 @@ class EmployeeController extends Controller
 
     public function lookup(Request $request): JsonResponse
     {
+        Attendance::processAutoClockOuts();
+
         $request->validate(['employee_id' => 'required|string']);
 
         $id = strtoupper(trim($request->employee_id));
@@ -299,6 +303,8 @@ class EmployeeController extends Controller
 
     public function clockOut(Request $request): JsonResponse
     {
+        Attendance::processAutoClockOuts();
+
         $request->validate([
             'employee_id' => 'required|string',
             'daily_report' => 'nullable|string',
@@ -327,17 +333,7 @@ class EmployeeController extends Controller
 
         $now = Carbon::now();
         $checkIn = Carbon::parse($attendance->check_in);
-        $checkOutTime = $now->format('H:i');
-
-        if ($checkIn->format('H:i') >= '12:00') {
-            $status = 'half-day';
-        } elseif ($checkOutTime < '13:30') {
-            $status = 'absent';
-        } elseif ($checkOutTime < '18:30') {
-            $status = 'half-day';
-        } else {
-            $status = 'present';
-        }
+        $status = Attendance::calculateStatus($checkIn, $now);
 
         $attendance->update([
             'check_out' => $now,

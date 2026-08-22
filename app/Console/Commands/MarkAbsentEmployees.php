@@ -22,6 +22,8 @@ class MarkAbsentEmployees extends Command
 
     public function handle()
     {
+        \App\Models\Attendance::processAutoClockOuts();
+
         $today = \Carbon\Carbon::today();
         $employees = \App\Models\Employee::where('status', 'Active')->get();
 
