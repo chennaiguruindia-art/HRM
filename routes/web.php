@@ -69,7 +69,7 @@ Route::middleware('auth')->group(function () {
 
 Route::prefix('employee')->name('employee.')->group(function () {
     Route::get('/login', [App\Http\Controllers\EmployeeController::class, 'login'])->name('login');
-    Route::get('/dashboard/{employee_id}', [App\Http\Controllers\EmployeeController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard/{employee_id}', [App\Http\Controllers\EmployeeController::class, 'dashboard'])->name('dashboard')->where('employee_id', '.*');
     Route::post('/logout', [App\Http\Controllers\EmployeeController::class, 'logout'])->name('logout');
     Route::get('/reports/daily', [App\Http\Controllers\EmployeeController::class, 'dailyReports'])->name('reports.daily');
     Route::post('/lookup', [App\Http\Controllers\EmployeeController::class, 'lookup'])->name('lookup');

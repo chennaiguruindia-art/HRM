@@ -61,4 +61,16 @@ class EmployeeSessionTest extends TestCase
         $this->get(route('employee.dashboard', ['employee_id' => 'EMP-TEST']))
             ->assertRedirect(route('employee.login'));
     }
+
+    public function test_lookup_and_dashboard_accessible_with_slashes_in_employee_id(): void
+    {
+        $this->makeEmployee('BLR/H/394');
+
+        $this->post(route('employee.lookup'), ['employee_id' => 'BLR/H/394'])
+            ->assertOk()
+            ->assertJson(['found' => true]);
+
+        $this->get(route('employee.dashboard', ['employee_id' => 'BLR/H/394']))
+            ->assertOk();
+    }
 }

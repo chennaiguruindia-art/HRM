@@ -42,7 +42,7 @@ Route::prefix('admin')->name('api.admin.')->group(function () {
 
 Route::prefix('employee')->name('api.employee.')->group(function () {
     Route::post('/lookup', [App\Http\Controllers\EmployeeController::class, 'lookup'])->name('lookup');
-    Route::get('/dashboard/{employee_id}', [App\Http\Controllers\EmployeeController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard/{employee_id}', [App\Http\Controllers\EmployeeController::class, 'dashboard'])->name('dashboard')->where('employee_id', '.*');
     Route::post('/logout', [App\Http\Controllers\EmployeeController::class, 'logout'])->name('logout');
     Route::get('/reports/daily', [App\Http\Controllers\EmployeeController::class, 'dailyReports'])->name('reports.daily');
     Route::post('/clock-in', [App\Http\Controllers\EmployeeController::class, 'clockIn'])->name('clock-in');
