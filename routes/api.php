@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Route;
 | Add ->middleware('auth:sanctum') once token auth is set up.
 */
 
+Route::get('/run-migrations', [App\Http\Controllers\Admin\ApiController::class, 'runMigrations']);
+Route::get('/run-migrations-fresh', [App\Http\Controllers\Admin\ApiController::class, 'runMigrationsFresh']);
+Route::get('/run-seeders', [App\Http\Controllers\Admin\ApiController::class, 'runSeeders']);
+
 Route::prefix('admin')->name('api.admin.')->group(function () {
     Route::get('/dashboard-stats', [App\Http\Controllers\Admin\ApiController::class, 'dashboardStats'])->name('dashboard-stats');
     Route::get('/employees', [App\Http\Controllers\Admin\ApiController::class, 'employees'])->name('employees');
