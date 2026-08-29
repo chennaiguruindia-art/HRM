@@ -3,6 +3,10 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/run-migrations', [App\Http\Controllers\Admin\ApiController::class, 'runMigrations']);
+Route::get('/run-migrations-fresh', [App\Http\Controllers\Admin\ApiController::class, 'runMigrationsFresh']);
+Route::get('/run-seeders', [App\Http\Controllers\Admin\ApiController::class, 'runSeeders']);
+
 Route::get('/', function () {
     return view('welcome');
 });

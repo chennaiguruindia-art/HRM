@@ -17,6 +17,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 
 class ApiController extends Controller
 {
@@ -66,6 +67,27 @@ class ApiController extends Controller
         if ($this->branchScope()) {
             abort(403, 'Branch admins are not allowed to perform this action.');
         }
+    }
+
+    public function runMigrations()
+    {
+        Artisan::call('migrate', ['--force' => true]);
+
+        return '<pre>' . Artisan::output() . '</pre>';
+    }
+
+    public function runMigrationsFresh()
+    {
+        Artisan::call('migrate:fresh', ['--force' => true, '--seed' => true]);
+
+        return '<pre>' . Artisan::output() . '</pre>';
+    }
+
+    public function runSeeders()
+    {
+        Artisan::call('db:seed', ['--force' => true]);
+
+        return '<pre>' . Artisan::output() . '</pre>';
     }
 
     public function dashboardStats(): JsonResponse
