@@ -836,6 +836,9 @@
     <div class="side-link" data-view="daily-plan">
       <i class="bi bi-journal-text"></i> Daily Plan
     </div>
+    <div class="side-link" data-view="old-data">
+      <i class="bi bi-file-earmark-spreadsheet-fill"></i> Old Data
+    </div>
 
     <div class="nav-label">Session</div>
         <div class="side-link" id="logoutLink">
@@ -1368,6 +1371,64 @@
           </div>
         </section>
 
+        <!-- ================= OLD DATA VIEW ================= -->
+        <section class="view" id="view-old-data">
+          <div class="section-card">
+            <div class="section-head d-flex flex-wrap align-items-center justify-content-between gap-2">
+              <div>
+                <h5>Old Data (Excel Work Entries)</h5>
+                <p class="text-muted small mb-0">Upload Excel work entry sheets and manage historical records</p>
+              </div>
+              <div class="d-flex flex-wrap align-items-center gap-2">
+                @if (!$isBranchAdmin)
+                <select class="form-select form-select-sm" id="oldDataBranchFilter" style="width:160px;">
+                  <option value="">All Branches</option>
+                </select>
+                @endif
+                <input type="text" class="form-control form-control-sm" id="oldDataDateFilter" placeholder="Filter by Date..." style="width:160px;">
+                <input type="text" class="form-control form-control-sm" id="oldDataSearch" placeholder="Search staff, work..." style="width:170px;">
+                <a href="{{ route('admin.api.old-data.sample') }}" class="btn btn-outline-secondary btn-sm" title="Download Sample CSV/Excel Template">
+                  <i class="bi bi-download"></i> Sample
+                </a>
+                <button class="btn btn-primary btn-sm" onclick="openOldDataUploadModal()">
+                  <i class="bi bi-file-earmark-arrow-up-fill"></i> Upload Excel
+                </button>
+                <button class="btn btn-accent btn-sm" onclick="openOldDataModal()">
+                  <i class="bi bi-plus-lg"></i> Add Entry
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="clearAllOldData()" title="Clear all records">
+                  <i class="bi bi-trash"></i> Clear
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="tbl" id="oldDataTable">
+                <thead>
+                  <tr>
+                    <th>Si.No</th>
+                    @if (!$isBranchAdmin)
+                    <th>Branch</th>
+                    @endif
+                    <th>S.N.</th>
+                    <th>Staff Name</th>
+                    <th>Entry Date</th>
+                    <th>Entry Time</th>
+                    <th>Work Name</th>
+                    <th>Units</th>
+                    <th>Description</th>
+                    <th>Location</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="oldDataBody"></tbody>
+              </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center p-3 border-top text-muted small" id="oldDataFooter">
+              <span id="oldDataCountText">Showing 0 records</span>
+            </div>
+          </div>
+        </section>
+
       </main>
     </div>
   </div>
@@ -1772,6 +1833,122 @@
     </div>
   </div>
 
+  <!-- ============ Old Data Upload Modal ============ -->
+  <div class="modal fade" id="oldDataUploadModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title"><i class="bi bi-file-earmark-spreadsheet text-primary me-2"></i>Upload Excel / CSV File</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="oldDataUploadForm" enctype="multipart/form-data">
+          <div class="modal-body">
+            <p class="small text-muted mb-3">
+              Upload your daily work entry report (.xlsx, .xls, .csv). Supported columns: <strong>S.N., Staff Name, Entry Date, Entry Time, Work Name, Units, Description, Location</strong>.
+            </p>
+            @if (!$isBranchAdmin)
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Branch (Optional)</label>
+              <select class="form-select form-select-sm" name="branch_id" id="uploadBranchSelect">
+                <option value="">Global / All</option>
+              </select>
+            </div>
+            @endif
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Select Excel / CSV File</label>
+              <input type="file" class="form-control form-control-sm" name="file" id="oldDataFileInput" accept=".xlsx,.xls,.csv,.txt" required>
+            </div>
+            <div class="alert alert-info py-2 px-3 small d-flex align-items-center gap-2 mb-0">
+              <i class="bi bi-info-circle-fill fs-6 flex-shrink-0"></i>
+              <div>Columns after units (<strong>Description</strong> & <strong>Location</strong>) will be imported automatically if present, and can be edited anytime in the table.</div>
+            </div>
+            <div id="uploadProgressWrap" class="mt-3" style="display:none;">
+              <div class="progress" style="height:8px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" id="uploadProgressBar" style="width: 100%;"></div>
+              </div>
+              <div class="text-center small text-muted mt-1" id="uploadStatusText">Processing and importing records...</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm" id="oldDataUploadSubmitBtn">
+              <i class="bi bi-upload"></i> Upload & Import
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Old Data Entry Add/Edit Modal ============ -->
+  <div class="modal fade" id="oldDataModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title" id="oldDataModalTitle">Add Old Data Entry</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="oldDataForm">
+          <input type="hidden" id="oldDataFormId" name="id">
+          <div class="modal-body">
+            <div class="row g-2 mb-3">
+              @if (!$isBranchAdmin)
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Branch</label>
+                <select class="form-select form-select-sm" name="branch_id" id="oldDataModalBranch">
+                  <option value="">None / Global</option>
+                </select>
+              </div>
+              @endif
+              <div class="col-md-{{ !$isBranchAdmin ? '4' : '6' }}">
+                <label class="form-label small fw-semibold">S.N. (Serial No)</label>
+                <input type="text" class="form-control form-control-sm" name="sn" id="od_sn" placeholder="e.g. 1">
+              </div>
+              <div class="col-md-{{ !$isBranchAdmin ? '4' : '6' }}">
+                <label class="form-label small fw-semibold">Staff Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-sm" name="staff_name" id="od_staff_name" placeholder="e.g. B RAHUL" required>
+              </div>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Entry Date</label>
+                <input type="text" class="form-control form-control-sm" name="entry_date" id="od_entry_date" placeholder="e.g. 01-08-2026 | Saturday">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Entry Time</label>
+                <input type="text" class="form-control form-control-sm" name="entry_time" id="od_entry_time" placeholder="e.g. 06:47 PM">
+              </div>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Work Name</label>
+                <input type="text" class="form-control form-control-sm" name="work_name" id="od_work_name" placeholder="e.g. Futura Tech Park - Sholinganallur">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Units</label>
+                <input type="text" class="form-control form-control-sm" name="units" id="od_units" placeholder="e.g. Prabhu Sir">
+              </div>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Description</label>
+                <textarea class="form-control form-control-sm" name="description" id="od_description" rows="2" placeholder="Description / details"></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Location</label>
+                <textarea class="form-control form-control-sm" name="location" id="od_location" rows="2" placeholder="Site location / address"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm" id="oldDataSubmitBtn">Save Entry</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -1809,6 +1986,12 @@
       adminNotifications: "{{ route('admin.api.admin-notifications') }}",
       sendAdminNotification: "{{ route('admin.api.admin-notifications.send') }}",
       markAdminNotificationsRead: "{{ route('admin.api.admin-notifications.read') }}",
+      oldData: "{{ route('admin.api.old-data') }}",
+      oldDataUpload: "{{ route('admin.api.old-data.upload') }}",
+      oldDataStore: "{{ route('admin.api.old-data.store') }}",
+      oldDataUpdate: "{{ route('admin.api.old-data.update') }}",
+      oldDataDelete: "{{ route('admin.api.old-data.delete') }}",
+      oldDataClear: "{{ route('admin.api.old-data.clear') }}",
     };
 
     const ADMIN_BRANCH = document.documentElement.getAttribute('data-branch') || null;
@@ -1857,7 +2040,8 @@
       salary: ["Salary Calculations", "Monthly salary processing"],
       holidays: ["Holidays", "Manage company holidays"],
       reports: ["Daily Reports", "Branch-wise employee daily reports"],
-      "daily-plan": ["Daily Plan", "Track sales visits and followups"]
+      "daily-plan": ["Daily Plan", "Track sales visits and followups"],
+      "old-data": ["Old Data", "Upload, view and manage legacy daily work entry records"]
     };
 
     function goTo(viewName) {
@@ -1898,6 +2082,7 @@
       if (viewName === "holidays") loadHolidays();
       if (viewName === "reports") loadReportsView();
       if (viewName === "daily-plan") loadDailyPlans();
+      if (viewName === "old-data") loadOldData();
     }
 
     $(document).on("click", "[data-view]", function(e) {
@@ -3254,6 +3439,215 @@
         console.error("Status update failed", xhr.responseJSON || xhr.statusText);
       });
     }
+
+    /* =========================================================================
+       OLD DATA (EXCEL WORK ENTRIES)
+       ========================================================================= */
+    let oldDataCache = [];
+
+    function loadOldData() {
+      $("#oldDataBody").html(skeletonRows(5, IS_BRANCH_ADMIN ? 10 : 11));
+      if (!IS_BRANCH_ADMIN && !$("#oldDataBranchFilter option:not(:first)").length) {
+        loadBranchesToOldDataFilter();
+      }
+      const branchId = $("#oldDataBranchFilter").val() || "";
+      const search = $("#oldDataSearch").val() || "";
+      const date = $("#oldDataDateFilter").val() || "";
+
+      let url = API.oldData + "?search=" + encodeURIComponent(search) + "&date=" + encodeURIComponent(date);
+      if (branchId) {
+        url += "&branch_id=" + encodeURIComponent(branchId);
+      }
+
+      apiGet(url).then(function(rows) {
+        oldDataCache = rows || [];
+        renderOldData(oldDataCache);
+      }).fail(function() {
+        $("#oldDataBody").html('<tr><td colspan="' + (IS_BRANCH_ADMIN ? 10 : 11) + '" class="text-center text-danger py-4">Failed to load old data records.</td></tr>');
+      });
+    }
+
+    function loadBranchesToOldDataFilter() {
+      var src = (branchesCache && branchesCache.length) ? branchesCache : [];
+      if (!src.length) {
+        apiGet(API.branches).then(function(rows) {
+          branchesCache = rows || [];
+          populateOldDataBranchDropdowns(branchesCache);
+        });
+      } else {
+        populateOldDataBranchDropdowns(src);
+      }
+    }
+
+    function populateOldDataBranchDropdowns(list) {
+      var currentFilter = $("#oldDataBranchFilter").val();
+      var filterHtml = '<option value="">All Branches</option>' + list.map(function(b) {
+        return '<option value="' + b.id + '">' + b.name + '</option>';
+      }).join("");
+      $("#oldDataBranchFilter").html(filterHtml).val(currentFilter);
+
+      var modalHtml = '<option value="">None / Global</option>' + list.map(function(b) {
+        return '<option value="' + b.id + '">' + b.name + '</option>';
+      }).join("");
+      $("#oldDataModalBranch").html(modalHtml);
+      $("#uploadBranchSelect").html('<option value="">Global / All</option>' + list.map(function(b) {
+        return '<option value="' + b.id + '">' + b.name + '</option>';
+      }).join(""));
+    }
+
+    $("#oldDataBranchFilter, #oldDataDateFilter").on("change", function() {
+      loadOldData();
+    });
+
+    let oldDataSearchTimer = null;
+    $("#oldDataSearch").on("input", function() {
+      clearTimeout(oldDataSearchTimer);
+      oldDataSearchTimer = setTimeout(function() {
+        loadOldData();
+      }, 300);
+    });
+
+    function renderOldData(rows) {
+      if (!rows || !rows.length) {
+        $("#oldDataBody").html('<tr><td colspan="' + (IS_BRANCH_ADMIN ? 10 : 11) + '" class="text-center text-muted py-4">No records found. Click <strong>Upload Excel</strong> to import data.</td></tr>');
+        $("#oldDataCountText").text("Showing 0 records");
+        return;
+      }
+
+      $("#oldDataCountText").text("Showing " + rows.length + " record" + (rows.length > 1 ? "s" : ""));
+
+      let html = rows.map(function(r, i) {
+        let tr = "<tr>" +
+          "<td class='mono small'>" + r.sino + "</td>";
+
+        if (!IS_BRANCH_ADMIN) {
+          tr += "<td><span class='badge bg-info bg-opacity-10 text-info'>" + (r.branch || '-') + "</span></td>";
+        }
+
+        tr += "<td class='mono small font-semibold'>" + (r.sn || '-') + "</td>" +
+          "<td class='fw-semibold text-dark'>" + (r.staff_name || '-') + "</td>" +
+          "<td class='mono small'>" + (r.entry_date || '-') + "</td>" +
+          "<td class='mono small text-muted'>" + (r.entry_time || '-') + "</td>" +
+          "<td>" + (r.work_name || '-') + "</td>" +
+          "<td>" + (r.units || '-') + "</td>" +
+          "<td>" + (r.description || '-') + "</td>" +
+          "<td>" + (r.location || '-') + "</td>" +
+          "<td class='text-end whitespace-nowrap'>" +
+            "<span class='action-ic me-1' title='Edit Entry' onclick='editOldData(" + i + ")'><i class='bi bi-pencil-fill'></i></span>" +
+            "<span class='action-ic text-danger' title='Delete Entry' onclick='deleteOldData(" + r.id + ")'><i class='bi bi-trash-fill'></i></span>" +
+          "</td>" +
+        "</tr>";
+        return tr;
+      }).join("");
+
+      $("#oldDataBody").html(html);
+    }
+
+    function openOldDataUploadModal() {
+      $("#oldDataUploadForm")[0].reset();
+      $("#uploadProgressWrap").hide();
+      $("#oldDataUploadSubmitBtn").prop("disabled", false).html('<i class="bi bi-upload"></i> Upload & Import');
+      new bootstrap.Modal(document.getElementById("oldDataUploadModal")).show();
+    }
+
+    $("#oldDataUploadForm").on("submit", function(e) {
+      e.preventDefault();
+      var formData = new FormData(this);
+      var submitBtn = $("#oldDataUploadSubmitBtn");
+      var progressWrap = $("#uploadProgressWrap");
+      var statusText = $("#uploadStatusText");
+
+      submitBtn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-1"></span> Uploading...');
+      progressWrap.show();
+      statusText.text("Uploading file and processing records...");
+
+      $.ajax({
+        url: API.oldDataUpload,
+        method: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+      }).done(function(resp) {
+        bootstrap.Modal.getInstance(document.getElementById("oldDataUploadModal")).hide();
+        alert(resp.message || "Excel file imported successfully!");
+        loadOldData();
+      }).fail(function(xhr) {
+        var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Failed to upload and import Excel file.";
+        alert("Upload Error: " + msg);
+      }).always(function() {
+        submitBtn.prop("disabled", false).html('<i class="bi bi-upload"></i> Upload & Import');
+        progressWrap.hide();
+      });
+    });
+
+    function openOldDataModal(data) {
+      $("#oldDataForm")[0].reset();
+      $("#oldDataFormId").val("");
+      $("#oldDataModalTitle").text("Add Old Data Entry");
+      $("#oldDataSubmitBtn").text("Save Entry");
+
+      if (data) {
+        $("#oldDataFormId").val(data.id);
+        $("#oldDataModalTitle").text("Edit Old Data Entry");
+        $("#oldDataSubmitBtn").text("Update Entry");
+        $("#od_sn").val(data.sn || "");
+        $("#od_staff_name").val(data.staff_name || "");
+        $("#od_entry_date").val(data.entry_date || "");
+        $("#od_entry_time").val(data.entry_time || "");
+        $("#od_work_name").val(data.work_name || "");
+        $("#od_units").val(data.units || "");
+        $("#od_description").val(data.description || "");
+        $("#od_location").val(data.location || "");
+        if (!IS_BRANCH_ADMIN && data.branch_id) {
+          $("#oldDataModalBranch").val(data.branch_id);
+        }
+      }
+      new bootstrap.Modal(document.getElementById("oldDataModal")).show();
+    }
+
+    function editOldData(index) {
+      if (oldDataCache[index]) {
+        openOldDataModal(oldDataCache[index]);
+      }
+    }
+
+    function deleteOldData(id) {
+      if (!confirm("Are you sure you want to delete this old data entry?")) return;
+      apiPost(API.oldDataDelete, { id: id }).then(function(resp) {
+        loadOldData();
+      }).fail(function(xhr) {
+        alert("Failed to delete record: " + (xhr.responseJSON?.message || xhr.statusText));
+      });
+    }
+
+    function clearAllOldData() {
+      var branchMsg = IS_BRANCH_ADMIN ? "for your branch" : "across all branches";
+      if (!confirm("CAUTION: Are you sure you want to clear/delete all old data records " + branchMsg + "? This action cannot be undone.")) return;
+      
+      var branchId = $("#oldDataBranchFilter").val() || "";
+      apiPost(API.oldDataClear, { branch_id: branchId }).then(function(resp) {
+        alert(resp.message || "All old data records cleared successfully.");
+        loadOldData();
+      }).fail(function(xhr) {
+        alert("Failed to clear records: " + (xhr.responseJSON?.message || xhr.statusText));
+      });
+    }
+
+    $("#oldDataForm").on("submit", function(e) {
+      e.preventDefault();
+      var data = Object.fromEntries(new FormData(this));
+      var url = data.id ? API.oldDataUpdate : API.oldDataStore;
+
+      apiPost(url, data).then(function(resp) {
+        loadOldData();
+        bootstrap.Modal.getInstance(document.getElementById("oldDataModal")).hide();
+      }).fail(function(xhr) {
+        alert("Failed to save entry: " + (xhr.responseJSON?.message || xhr.statusText));
+      });
+    });
 
     function attendancePill(status) {
       const map = {

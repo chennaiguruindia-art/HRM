@@ -64,6 +64,13 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::get('/admin-notifications', [App\Http\Controllers\Admin\ApiController::class, 'adminNotifications'])->name('admin-notifications');
         Route::post('/admin-notifications/send', [App\Http\Controllers\Admin\ApiController::class, 'sendAdminNotification'])->name('admin-notifications.send');
         Route::post('/admin-notifications/read', [App\Http\Controllers\Admin\ApiController::class, 'markAdminNotificationsRead'])->name('admin-notifications.read');
+        Route::get('/old-data', [App\Http\Controllers\Admin\ApiController::class, 'oldData'])->name('old-data');
+        Route::post('/old-data/upload', [App\Http\Controllers\Admin\ApiController::class, 'uploadOldData'])->name('old-data.upload');
+        Route::post('/old-data', [App\Http\Controllers\Admin\ApiController::class, 'storeOldData'])->name('old-data.store');
+        Route::post('/old-data/update', [App\Http\Controllers\Admin\ApiController::class, 'updateOldData'])->name('old-data.update');
+        Route::post('/old-data/delete', [App\Http\Controllers\Admin\ApiController::class, 'deleteOldData'])->name('old-data.delete');
+        Route::post('/old-data/clear', [App\Http\Controllers\Admin\ApiController::class, 'clearOldData'])->name('old-data.clear');
+        Route::get('/old-data/sample', [App\Http\Controllers\Admin\ApiController::class, 'sampleOldData'])->name('old-data.sample');
     });
 });
 

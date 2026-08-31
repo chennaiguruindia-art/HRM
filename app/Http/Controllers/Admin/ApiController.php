@@ -12,12 +12,18 @@ use App\Models\DailyPlan;
 use App\Models\Holiday;
 use App\Models\LeaveRequest;
 use App\Models\Notification;
+use App\Models\OldData;
 use App\Models\SalaryCalculation;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Response;
+use App\Services\SimpleXlsxReader;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 class ApiController extends Controller
 {
@@ -26,7 +32,7 @@ class ApiController extends Controller
 
     private function branchScope(): ?int
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         return $user && $user->branch_id ? (int) $user->branch_id : null;
     }
@@ -99,12 +105,12 @@ class ApiController extends Controller
 
         $total = Employee::query()->when($branchId, fn ($q) => $q->where('branch_id', $branchId))->count();
         $today = Carbon::today();
-        $presentToday = Attendance::whereDate('date', $today)->whereIn('status', ['present', 'half-day', 'late'])
+        $presentToday = Attendance::query()->whereRaw('DATE(date) = ?', [$today->toDateString()])->whereIn('status', ['present', 'half-day', 'late'])
             ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
             ->count();
-        $onLeave = LeaveRequest::where('status', 'Approved')
-            ->whereDate('from_date', '<=', $today)
-            ->whereDate('to_date', '>=', $today)
+        $onLeave = LeaveRequest::query()->where('status', 'Approved')
+            ->where('from_date', '<=', $today->toDateString())
+            ->where('to_date', '>=', $today->toDateString())
             ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
             ->count();
         $pending = LeaveRequest::where('status', 'Pending')
@@ -361,9 +367,9 @@ class ApiController extends Controller
             if ($request->date) {
                 $today = Carbon::parse($request->date)->startOfDay();
             }
-            $isHoliday = Holiday::whereDate('date', $today)->exists();
-            $records = Attendance::with('user')
-                ->whereDate('date', $today)
+            $isHoliday = Holiday::query()->whereRaw('DATE(date) = ?', [$today->toDateString()])->exists();
+            $records = Attendance::query()->with('user')
+                ->whereRaw('DATE(date) = ?', [$today->toDateString()])
                 ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
                 ->get();
             $result = $employees->map(function ($e) use ($records, $isHoliday, $today) {
@@ -371,7 +377,7 @@ class ApiController extends Controller
                 $status = $att ? ucfirst($att->status) : 'Absent';
                 if ($isHoliday) $status = 'Holiday';
                 return [
-                    'date' => $att ? $att->date->format('Y-m-d') : $today->format('Y-m-d'),
+                    'date' => $att && $att->date ? Carbon::parse($att->date)->format('Y-m-d') : $today->format('Y-m-d'),
                     'employee_id' => $e->employee_id,
                     'att_id' => $att?->id,
                     'name' => $e->name,
@@ -442,8 +448,8 @@ class ApiController extends Controller
         $this->ensureBranchAccess($employee);
         $date = Carbon::parse($request->date)->toDateString();
 
-        $attendance = Attendance::where('employee_id', $employee->employee_id)
-            ->whereDate('date', $date)
+        $attendance = Attendance::query()->where('employee_id', $employee->employee_id)
+            ->whereRaw('DATE(date) = ?', [$date])
             ->first();
 
         if ($request->field === 'check_in') {
@@ -487,7 +493,7 @@ class ApiController extends Controller
                 'edited_lat' => $request->edited_lat,
                 'edited_lng' => $request->edited_lng,
                 'edited_location_name' => $request->edited_location_name,
-                'edited_by' => auth()->id(),
+                'edited_by' => Auth::id(),
             ]
         );
 
@@ -514,7 +520,7 @@ class ApiController extends Controller
         $this->ensureBranchAccess($employee);
 
         if ($request->date) {
-            $query->whereDate('date', Carbon::parse($request->date));
+            $query->whereRaw('DATE(date) = ?', [Carbon::parse($request->date)->toDateString()]);
         } elseif ($request->month) {
             $monthStart = Carbon::parse($request->month . '-01')->startOfMonth();
             $monthEnd = $monthStart->copy()->endOfMonth();
@@ -951,7 +957,7 @@ class ApiController extends Controller
             ->first();
 
         $payload = [
-            'processed_by' => auth()->id(),
+            'processed_by' => Auth::id(),
             'base_salary' => $baseSalary,
             'absent_days' => $absentDays,
             'leave_days' => $leaveDays,
@@ -1143,7 +1149,7 @@ class ApiController extends Controller
 
     public function adminNotifications(): JsonResponse
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
 
         $notes = AdminNotification::where('to_user_id', $userId)
             ->latest()
@@ -1164,7 +1170,7 @@ class ApiController extends Controller
 
     public function sendAdminNotification(Request $request): JsonResponse
     {
-        $fromUserId = auth()->id();
+        $fromUserId = Auth::id();
 
         $data = $request->validate([
             'to_user_id' => 'required|exists:users,id',
@@ -1184,7 +1190,7 @@ class ApiController extends Controller
 
     public function markAdminNotificationsRead(): JsonResponse
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
 
         AdminNotification::where('to_user_id', $userId)
             ->whereNull('read_at')
@@ -1192,4 +1198,330 @@ class ApiController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    /* =========================================================================
+       OLD DATA / EXCEL IMPORT
+       ========================================================================= */
+
+    public function oldData(Request $request): JsonResponse
+    {
+        $branchId = $this->branchScope() ?? ($request->filled('branch_id') ? (int) $request->branch_id : null);
+        $search = trim((string) $request->input('search', $request->input('q', '')));
+        $dateFilter = trim((string) $request->input('date', ''));
+
+        $query = OldData::with('branch')
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->when($dateFilter, fn($q) => $q->where('entry_date', 'like', "%{$dateFilter}%"))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('staff_name', 'like', "%{$search}%")
+                        ->orWhere('work_name', 'like', "%{$search}%")
+                        ->orWhere('units', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%")
+                        ->orWhere('location', 'like', "%{$search}%")
+                        ->orWhere('sn', 'like', "%{$search}%")
+                        ->orWhere('entry_date', 'like', "%{$search}%");
+                });
+            })
+            ->latest('id');
+
+        $records = $query->get()->map(function ($row, $index) {
+            return [
+                'sino' => $index + 1,
+                'id' => $row->id,
+                'branch_id' => $row->branch_id,
+                'branch' => $row->branch?->name ?? '-',
+                'sn' => $row->sn ?? '',
+                'staff_name' => $row->staff_name ?? '',
+                'entry_date' => $row->entry_date ?? '',
+                'entry_time' => $row->entry_time ?? '',
+                'work_name' => $row->work_name ?? '',
+                'units' => $row->units ?? '',
+                'description' => $row->description ?? '',
+                'location' => $row->location ?? '',
+                'created_at' => $row->created_at ? $row->created_at->format('d-m-Y H:i') : '-',
+            ];
+        });
+
+        return response()->json($records);
+    }
+
+    public function uploadOldData(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|max:30720',
+            'branch_id' => 'nullable|exists:branches,id',
+        ]);
+
+        $file = $request->file('file');
+        $extension = strtolower($file->getClientOriginalExtension());
+        if (!in_array($extension, ['xlsx', 'xls', 'csv', 'txt'])) {
+            return response()->json(['success' => false, 'message' => 'Invalid file format. Please upload an Excel (.xlsx, .xls) or CSV file.'], 422);
+        }
+
+        $branchId = $this->branchScope() ?? ($request->filled('branch_id') ? (int) $request->branch_id : null);
+
+        try {
+            $rows = SimpleXlsxReader::read($file->getRealPath());
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to read file: ' . $e->getMessage()], 422);
+        }
+
+        if (empty($rows)) {
+            return response()->json(['success' => false, 'message' => 'The uploaded file is empty.'], 422);
+        }
+
+        // Detect header row
+        $headerRowIdx = null;
+        $colMap = [
+            'sn' => null,
+            'staff_name' => null,
+            'entry_date' => null,
+            'entry_time' => null,
+            'work_name' => null,
+            'units' => null,
+            'description' => null,
+            'location' => null,
+        ];
+
+        foreach ($rows as $rIdx => $row) {
+            $rowValues = array_map(fn($v) => strtolower(trim((string) $v)), $row);
+            $joined = implode(' ', $rowValues);
+
+            // Check if this row looks like header
+            if (
+                str_contains($joined, 'staff') ||
+                str_contains($joined, 'work') ||
+                str_contains($joined, 'unit') ||
+                str_contains($joined, 's.n') ||
+                str_contains($joined, 'sn')
+            ) {
+                $headerRowIdx = $rIdx;
+                foreach ($row as $colLetter => $cellVal) {
+                    $clean = strtolower(trim((string) $cellVal));
+                    if (empty($clean)) continue;
+
+                    if ($colMap['sn'] === null && (str_contains($clean, 's.n') || $clean === 'sn' || str_contains($clean, 's.no') || str_contains($clean, 'serial'))) {
+                        $colMap['sn'] = $colLetter;
+                    } elseif ($colMap['staff_name'] === null && (str_contains($clean, 'staff') || str_contains($clean, 'employee') || ($clean === 'name' && !str_contains($clean, 'work')))) {
+                        $colMap['staff_name'] = $colLetter;
+                    } elseif ($colMap['entry_date'] === null && str_contains($clean, 'date')) {
+                        $colMap['entry_date'] = $colLetter;
+                    } elseif ($colMap['entry_time'] === null && str_contains($clean, 'time')) {
+                        $colMap['entry_time'] = $colLetter;
+                    } elseif ($colMap['work_name'] === null && (str_contains($clean, 'work') || str_contains($clean, 'task'))) {
+                        $colMap['work_name'] = $colLetter;
+                    } elseif ($colMap['units'] === null && str_contains($clean, 'unit')) {
+                        $colMap['units'] = $colLetter;
+                    } elseif ($colMap['description'] === null && (str_contains($clean, 'desc') || str_contains($clean, 'remark') || str_contains($clean, 'detail'))) {
+                        $colMap['description'] = $colLetter;
+                    } elseif ($colMap['location'] === null && (str_contains($clean, 'loc') || str_contains($clean, 'site') || str_contains($clean, 'place') || str_contains($clean, 'address'))) {
+                        $colMap['location'] = $colLetter;
+                    }
+                }
+                break;
+            }
+        }
+
+        // Fallback positional map if header row wasn't fully detected
+        $startRow = $headerRowIdx ? $headerRowIdx + 1 : 1;
+        if ($colMap['staff_name'] === null && $colMap['work_name'] === null) {
+            // Default positional mapping: A=SN, B=Staff Name, C=Entry Date, D=Entry Time, E=Work Name, F=Units, G=Description, H=Location
+            $colLetters = array_keys(reset($rows));
+            $colMap['sn'] = $colLetters[0] ?? 'A';
+            $colMap['staff_name'] = $colLetters[1] ?? 'B';
+            $colMap['entry_date'] = $colLetters[2] ?? 'C';
+            $colMap['entry_time'] = $colLetters[3] ?? 'D';
+            $colMap['work_name'] = $colLetters[4] ?? 'E';
+            $colMap['units'] = $colLetters[5] ?? 'F';
+            $colMap['description'] = $colLetters[6] ?? 'G';
+            $colMap['location'] = $colLetters[7] ?? 'H';
+            $startRow = 2; // Skip first row as assumed header
+        }
+
+        $imported = 0;
+        $batch = [];
+
+        foreach ($rows as $rIdx => $row) {
+            if ($rIdx < $startRow) {
+                continue;
+            }
+
+            $snVal = isset($colMap['sn'], $row[$colMap['sn']]) ? trim((string) $row[$colMap['sn']]) : null;
+            $staffVal = isset($colMap['staff_name'], $row[$colMap['staff_name']]) ? trim((string) $row[$colMap['staff_name']]) : null;
+            $dateVal = isset($colMap['entry_date'], $row[$colMap['entry_date']]) ? trim((string) $row[$colMap['entry_date']]) : null;
+            $timeVal = isset($colMap['entry_time'], $row[$colMap['entry_time']]) ? trim((string) $row[$colMap['entry_time']]) : null;
+            $workVal = isset($colMap['work_name'], $row[$colMap['work_name']]) ? trim((string) $row[$colMap['work_name']]) : null;
+            $unitsVal = isset($colMap['units'], $row[$colMap['units']]) ? trim((string) $row[$colMap['units']]) : null;
+            $descVal = isset($colMap['description'], $row[$colMap['description']]) ? trim((string) $row[$colMap['description']]) : null;
+            $locVal = isset($colMap['location'], $row[$colMap['location']]) ? trim((string) $row[$colMap['location']]) : null;
+
+            // Skip empty rows
+            if (empty($snVal) && empty($staffVal) && empty($dateVal) && empty($workVal) && empty($unitsVal) && empty($descVal) && empty($locVal)) {
+                continue;
+            }
+
+            // Skip repeated header line if any
+            if (strtolower($staffVal) === 'staff name' || strtolower($workVal) === 'work name') {
+                continue;
+            }
+
+            $batch[] = [
+                'branch_id' => $branchId,
+                'sn' => $snVal ?: null,
+                'staff_name' => $staffVal ?: null,
+                'entry_date' => $dateVal ?: null,
+                'entry_time' => $timeVal ?: null,
+                'work_name' => $workVal ?: null,
+                'units' => $unitsVal ?: null,
+                'description' => $descVal ?: null,
+                'location' => $locVal ?: null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            $imported++;
+
+            if (count($batch) >= 500) {
+                OldData::insert($batch);
+                $batch = [];
+            }
+        }
+
+        if (!empty($batch)) {
+            OldData::insert($batch);
+        }
+
+        return response()->json([
+            'success' => true,
+            'count' => $imported,
+            'message' => "Successfully imported {$imported} record(s) from Excel file.",
+        ]);
+    }
+
+    public function storeOldData(Request $request): JsonResponse
+    {
+        $branchId = $this->branchScope() ?? ($request->filled('branch_id') ? (int) $request->branch_id : null);
+
+        $data = $request->validate([
+            'sn' => 'nullable|string|max:50',
+            'staff_name' => 'nullable|string|max:255',
+            'entry_date' => 'nullable|string|max:100',
+            'entry_time' => 'nullable|string|max:100',
+            'work_name' => 'nullable|string',
+            'units' => 'nullable|string',
+            'description' => 'nullable|string',
+            'location' => 'nullable|string',
+            'branch_id' => 'nullable|exists:branches,id',
+        ]);
+
+        $data['branch_id'] = $branchId;
+
+        $record = OldData::create($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Record added successfully.',
+            'data' => $record,
+        ]);
+    }
+
+    public function updateOldData(Request $request): JsonResponse
+    {
+        $branchId = $this->branchScope();
+
+        $record = OldData::findOrFail($request->id);
+
+        if ($branchId && (int) $record->branch_id !== $branchId) {
+            abort(403, 'Access denied.');
+        }
+
+        $data = $request->validate([
+            'sn' => 'nullable|string|max:50',
+            'staff_name' => 'nullable|string|max:255',
+            'entry_date' => 'nullable|string|max:100',
+            'entry_time' => 'nullable|string|max:100',
+            'work_name' => 'nullable|string',
+            'units' => 'nullable|string',
+            'description' => 'nullable|string',
+            'location' => 'nullable|string',
+            'branch_id' => 'nullable|exists:branches,id',
+        ]);
+
+        if (!$branchId && $request->has('branch_id')) {
+            $data['branch_id'] = $request->branch_id;
+        }
+
+        $record->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Record updated successfully.',
+            'data' => $record,
+        ]);
+    }
+
+    public function deleteOldData(Request $request): JsonResponse
+    {
+        $branchId = $this->branchScope();
+
+        $record = OldData::findOrFail($request->id);
+
+        if ($branchId && (int) $record->branch_id !== $branchId) {
+            abort(403, 'Access denied.');
+        }
+
+        $record->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Record deleted successfully.',
+        ]);
+    }
+
+    public function clearOldData(Request $request): JsonResponse
+    {
+        $branchId = $this->branchScope() ?? ($request->filled('branch_id') ? (int) $request->branch_id : null);
+
+        $query = OldData::query();
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+
+        $deletedCount = $query->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Cleared {$deletedCount} old data record(s).",
+        ]);
+    }
+
+    public function sampleOldData()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="old_data_sample_template.csv"',
+        ];
+
+        $callback = function () {
+            $handle = fopen('php://output', 'w');
+            // Header row matching screenshot + requested description and location columns
+            fputcsv($handle, ['S.N.', 'Staff Name', 'Entry Date', 'Entry Time', 'Work Name', 'Units', 'Description', 'Location']);
+
+            // Sample rows based on user's image
+            fputcsv($handle, ['1', 'B RAHUL', '01-08-2026 | Saturday', '06:47 PM', 'Futura Tech Park - Sholinganallur', 'Prabhu Sir', 'Regular maintenance inspection', 'Futura Tech Park']);
+            fputcsv($handle, ['2', 'B RAHUL', '03-08-2026 | Monday', '05:22 PM', 'Futura Tech Park - Sholinganallur', 'Prabhu Sir', 'Daily status review', 'Futura Tech Park']);
+            fputcsv($handle, ['3', 'B RAHUL', '03-08-2026 | Monday', '12:41 PM', 'Futura Tech Park - Sholinganallur', 'Finding Man Power Sourcing to deploy', 'Manpower allocation discussion', 'Sholinganallur']);
+            fputcsv($handle, ['4', 'B RAHUL', '04-08-2026 | Tuesday', '06:17 PM', 'Futura Tech Park - Sholinganallur', 'Prabhu Sir', 'Site coordination', 'Futura Tech Park']);
+            fputcsv($handle, ['5', 'B RAHUL', '05-08-2026 | Wednesday', '05:11 PM', 'Futura Tech Park - Sholinganallur', 'Prabhu Sir', 'Team review', 'Futura Tech Park']);
+            fputcsv($handle, ['6', 'B RAHUL', '06-08-2026 | Thursday', '06:35 PM', 'Prestige Silver Springs - Sholinganallur', 'Dhamodharan Sir', 'Facility supervision', 'Prestige Silver Springs']);
+            fputcsv($handle, ['7', 'B RAHUL', '06-08-2026 | Thursday', '12:35 PM', 'Futura Tech Park - Sholinganallur', 'Prabhu Sir', 'Afternoon update', 'Futura Tech Park']);
+            fputcsv($handle, ['8', 'B RAHUL', '07-08-2026 | Friday', '02:18 PM', 'LTM - Ramapuram', 'Kabin Supervisor', 'Weekly site inspection', 'LTM Ramapuram']);
+
+            fclose($handle);
+        };
+
+        return Response::stream($callback, 200, $headers);
+    }
 }
+

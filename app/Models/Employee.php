@@ -2,6 +2,19 @@
 
 namespace App\Models;
 
+/**
+ * @property int|null $branch_id
+ * @property string $employee_id
+ * @property string|null $photo
+ * @property string|null $designation
+ * @property string|null $status
+ * @property string|null $email
+ * @property string|null $shift_start
+ * @property string|null $shift_end
+ * @property string|null $gender
+ * @property int|null $paid_leaves
+ * @property float|int|string|null $salary
+ */
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
