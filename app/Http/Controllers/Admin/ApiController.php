@@ -869,18 +869,19 @@ class ApiController extends Controller
         }
 
         $paidLeavesUsed = $employee->paid_leaves ?? 1;
+        $daysInMonth = $monthStart->daysInMonth;
 
         $joinDate = $employee->join_date ? Carbon::parse($employee->join_date) : null;
         if ($joinDate && $joinDate->gt($monthStart)) {
-            $eligibleDays = min(30, (int)$joinDate->copy()->startOfDay()->diffInDays($monthEnd->copy()->startOfDay()) + 1);
+            $eligibleDays = min($daysInMonth, (int)$joinDate->copy()->startOfDay()->diffInDays($monthEnd->copy()->startOfDay()) + 1);
         } else {
-            $eligibleDays = 30;
+            $eligibleDays = $daysInMonth;
         }
 
         $workedDays = $presentDays + ($halfDays * 0.5) + $leaveDays;
         $workedDays = min($workedDays, $eligibleDays);
         $deductibleDays = max(0, $eligibleDays - $workedDays);
-        $perDay = $baseSalary / 30;
+        $perDay = $baseSalary / $daysInMonth;
         $finalSalary = max(0, round($perDay * $workedDays, 2));
 
         return response()->json([
@@ -951,18 +952,19 @@ class ApiController extends Controller
         }
 
         $paidLeavesUsed = $employee->paid_leaves ?? 1;
+        $daysInMonth = $monthStart->daysInMonth;
 
         $joinDate = $employee->join_date ? Carbon::parse($employee->join_date) : null;
         if ($joinDate && $joinDate->gt($monthStart)) {
-            $eligibleDays = min(30, (int)$joinDate->copy()->startOfDay()->diffInDays($monthEnd->copy()->startOfDay()) + 1);
+            $eligibleDays = min($daysInMonth, (int)$joinDate->copy()->startOfDay()->diffInDays($monthEnd->copy()->startOfDay()) + 1);
         } else {
-            $eligibleDays = 30;
+            $eligibleDays = $daysInMonth;
         }
 
         $workedDays = $presentDays + ($halfDays * 0.5) + $leaveDays;
         $workedDays = min($workedDays, $eligibleDays);
         $deductibleDays = max(0, $eligibleDays - $workedDays);
-        $perDay = $baseSalary / 30;
+        $perDay = $baseSalary / $daysInMonth;
         $finalSalary = max(0, round($perDay * $workedDays, 2));
 
         $monthKey = Carbon::create((int)$year, (int)$monthNum, 1)->format('F-Y');

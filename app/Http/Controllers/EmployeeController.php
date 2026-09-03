@@ -105,13 +105,13 @@ class EmployeeController extends Controller
             }
         }
 
-        $perDay = $baseSalary / 30;
+        $perDay = $baseSalary / $monthStart->daysInMonth;
 
         $joinDate = $employee->join_date ? Carbon::parse($employee->join_date) : null;
         if ($joinDate && $joinDate->gt($monthStart)) {
-            $eligibleDays = min(30, (int)$joinDate->copy()->startOfDay()->diffInDays($monthEnd->copy()->startOfDay()) + 1);
+            $eligibleDays = min($monthStart->daysInMonth, (int)$joinDate->copy()->startOfDay()->diffInDays($monthEnd->copy()->startOfDay()) + 1);
         } else {
-            $eligibleDays = 30;
+            $eligibleDays = $monthStart->daysInMonth;
         }
 
         $workedDays = $presentCount + ($halfDayCount * 0.5) + $approvedLeaveDaysThisMonth;
