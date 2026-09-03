@@ -9,6 +9,7 @@ use App\Models\LeaveRequest;
 use App\Models\Notification;
 use App\Models\SalaryCalculation;
 use App\Models\User;
+use App\Services\EmployeeNotificationService;
 use App\Services\FreeGeocodingService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +25,7 @@ class EmployeeController extends Controller
     public function dashboard(string $employeeId)
     {
         Attendance::processAutoClockOuts();
+        EmployeeNotificationService::checkDailyAnniversariesAndBirthdays();
 
         if (session('employee_id') !== $employeeId) {
             return redirect()->route('employee.login');
@@ -34,6 +36,8 @@ class EmployeeController extends Controller
         if (!$employee) {
             return redirect()->route('employee.login');
         }
+
+        $celebration = EmployeeNotificationService::getCelebrationsForEmployee($employee);
 
         $photo = $employee->photo
             ? asset('employee_profile_pic/' . $employee->photo)
@@ -120,6 +124,18 @@ class EmployeeController extends Controller
             ->limit(6)
             ->get();
 
+        $permissionsThisMonth = LeaveRequest::where(function ($q) use ($employee, $user) {
+                $q->where('employee_id', $employee->employee_id);
+                if ($user) {
+                    $q->orWhere('user_id', $user->id);
+                }
+            })
+            ->where('type', 'Permission')
+            ->where('status', 'Approved')
+            ->whereBetween('from_date', [$monthStart, $monthEnd])
+            ->count();
+        $isPermissionDisabled = ($permissionsThisMonth >= 2);
+
         return view('employee.dashboard', compact(
             'employee', 'photo', 'todayAtt', 'attendances',
             'presentCount', 'halfDayCount', 'absentCount', 'onLeaveCount',
@@ -129,7 +145,8 @@ class EmployeeController extends Controller
             'baseSalary', 'approvedLeaveDaysThisMonth', 'perDay',
             'eligibleDays', 'workedDays',
             'deductibleDays', 'finalSalary', 'salaryRecords',
-            'now', 'monthStart', 'monthEnd'
+            'now', 'monthStart', 'monthEnd', 'celebration',
+            'permissionsThisMonth', 'isPermissionDisabled'
         ));
     }
 
@@ -145,7 +162,81 @@ class EmployeeController extends Controller
 
         $employee = Employee::where('employee_id', $request->employee_id)->firstOrFail();
         $user = User::where('email', $employee->email)->first();
+        $admins = User::where('role', 'admin')->get();
 
+        // Check if request is for Permission
+        if (strtolower(trim($request->type)) === 'permission') {
+            // Permission rule: max 1 hour per day, must be a single day
+            if ($request->from_date !== $request->to_date) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permission can only be requested for a single day (maximum 1 hour per day).',
+                ], 422);
+            }
+
+            $reqDate = Carbon::parse($request->from_date);
+            $monthStart = $reqDate->copy()->startOfMonth();
+            $monthEnd = $reqDate->copy()->endOfMonth();
+
+            // Count approved permissions in this calendar month
+            $approvedPermissionsCount = LeaveRequest::where('employee_id', $employee->employee_id)
+                ->where('type', 'Permission')
+                ->where('status', 'Approved')
+                ->whereBetween('from_date', [$monthStart, $monthEnd])
+                ->count();
+
+            if ($approvedPermissionsCount >= 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permission is disabled. You have already reached your monthly limit of 2 permissions (2 hours) for ' . $reqDate->format('M Y') . '. Please apply for Leave instead.',
+                    'permission_disabled' => true,
+                ], 422);
+            }
+
+            // Auto-approve permission (1 hour, within 2 hrs monthly limit)
+            $leave = LeaveRequest::create([
+                'user_id' => $user?->id,
+                'employee_id' => $employee->employee_id,
+                'type' => 'Permission',
+                'from_date' => $request->from_date,
+                'to_date' => $request->to_date,
+                'hours' => 1.0,
+                'reason' => $request->reason,
+                'status' => 'Approved',
+            ]);
+
+            $usedCount = $approvedPermissionsCount + 1;
+
+            Notification::create([
+                'user_id' => $user?->id,
+                'employee_id' => $employee->employee_id,
+                'title' => 'Permission Auto-Approved',
+                'body' => "Your 1-hour permission for {$request->from_date} has been automatically approved ({$usedCount} of 2 hours used for " . $reqDate->format('M Y') . ").",
+                'type' => 'bi-check-circle-fill',
+                'is_read' => false,
+            ]);
+
+            foreach ($admins as $admin) {
+                Notification::create([
+                    'user_id' => $admin->id,
+                    'title' => 'Permission Auto-Approved',
+                    'body' => "{$employee->name} requested 1-hr permission on {$request->from_date} (Auto-Approved - {$usedCount}/2 hours used).",
+                    'type' => 'bi-clock-fill',
+                    'is_read' => false,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Permission auto-approved! ({$usedCount} of 2 monthly permission hours used).",
+                'leave' => $leave,
+                'auto_approved' => true,
+                'used_count' => $usedCount,
+                'is_now_disabled' => ($usedCount >= 2),
+            ]);
+        }
+
+        // Regular leave request (Sick Leave, Casual Leave, Earned Leave, etc.)
         $leave = LeaveRequest::create([
             'user_id' => $user?->id,
             'employee_id' => $employee->employee_id,
@@ -156,7 +247,6 @@ class EmployeeController extends Controller
             'status' => 'Pending',
         ]);
 
-        $admins = User::where('role', 'admin')->get();
         foreach ($admins as $admin) {
             Notification::create([
                 'user_id' => $admin->id,
@@ -214,6 +304,7 @@ class EmployeeController extends Controller
     public function lookup(Request $request): JsonResponse
     {
         Attendance::processAutoClockOuts();
+        EmployeeNotificationService::checkDailyAnniversariesAndBirthdays();
 
         $request->validate(['employee_id' => 'required|string']);
 

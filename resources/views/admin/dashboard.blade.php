@@ -2660,7 +2660,8 @@
           "<button class='btn btn-sm text-white me-1' style='background:var(--teal);' onclick='actOnLeave(" + r.id + ",\"Approved\")'>Approve</button>" +
           "<button class='btn btn-sm text-white' style='background:var(--coral);' onclick='actOnLeave(" + r.id + ",\"Rejected\")'>Reject</button>" :
           "<span class='text-muted small'>&mdash;</span>";
-        return "<tr><td class='fw-semibold'>" + r.name + "</td><td>" + r.type + "</td>" +
+        const typeDisplay = r.type + (r.hours ? " <span class='text-muted small'>(" + r.hours + "h)</span>" : "");
+        return "<tr><td class='fw-semibold'>" + r.name + "</td><td>" + typeDisplay + "</td>" +
           "<td class='mono small'>" + r.from + "</td><td class='mono small'>" + r.to + "</td>" +
           "<td class='small'>" + r.reason + "</td><td>" + statusPill(r.status) + "</td>" +
           "<td class='text-end'>" + actions + "</td></tr>";
@@ -2773,7 +2774,14 @@
             teal: ["var(--teal-soft)", "#0a8577"],
             indigo: ["var(--accent-soft)", "#4147a8"]
           };
-          const c = colorMap[n.color] || colorMap.indigo;
+          let c = colorMap[n.color] || colorMap.indigo;
+          if (n.icon === 'bi-cake2-fill') {
+            c = ['rgba(236,72,153,0.15)', '#ec4899'];
+          } else if (n.icon === 'bi-award-fill') {
+            c = ['rgba(14,165,233,0.15)', '#0284c7'];
+          } else if (n.icon === 'bi-check-circle-fill') {
+            c = ['var(--teal-soft)', '#0a8577'];
+          }
           return "<div class='notif-item " + (n.unread ? "unread" : "") + "'>" +
             "<div class='notif-ic' style='background:" + c[0] + ";color:" + c[1] + ";'><i class='bi " + n.icon + "'></i></div>" +
             "<div class='flex-grow-1'>" +

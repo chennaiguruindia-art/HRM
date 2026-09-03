@@ -1079,6 +1079,26 @@
 
       <main class="main" id="mainArea">
 
+        @if(!empty($celebration['is_birthday']))
+        <div class="alert mb-3 p-3 text-white border-0 shadow-sm d-flex align-items-center gap-3" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border-radius: 12px;">
+          <div style="font-size: 2rem; line-height: 1;">🎂</div>
+          <div>
+            <div class="fw-bold" style="font-size: 1.05rem;">Happy Birthday, {{ $employee->name }}! 🎉</div>
+            <div class="small" style="color: rgba(255,255,255,0.9);">{{ $celebration['birthday_msg'] }} Wishing you a joyous year ahead filled with happiness and success!</div>
+          </div>
+        </div>
+        @endif
+
+        @if(!empty($celebration['is_anniversary']))
+        <div class="alert mb-3 p-3 text-white border-0 shadow-sm d-flex align-items-center gap-3" style="background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%); border-radius: 12px;">
+          <div style="font-size: 2rem; line-height: 1;">🎉</div>
+          <div>
+            <div class="fw-bold" style="font-size: 1.05rem;">Happy {{ $celebration['anniversary_years'] }}{{ $celebration['anniversary_years'] == 1 ? 'st' : ($celebration['anniversary_years'] == 2 ? 'nd' : ($celebration['anniversary_years'] == 3 ? 'rd' : 'th')) }} Work Anniversary! 🏆</div>
+            <div class="small" style="color: rgba(255,255,255,0.9);">{{ $celebration['anniversary_msg'] }} Thank you for your dedication and wonderful journey with us!</div>
+          </div>
+        </div>
+        @endif
+
         <!-- ================= DASHBOARD VIEW ================= -->
         <section class="view active" id="view-dashboard">
           <div class="row g-3 mb-2">
@@ -1415,35 +1435,80 @@
           <div class="row g-3">
             <div class="col-lg-5">
               <div class="section-card">
-                <h5 class="mb-3">Apply for Leave / Permission</h5>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                  <h5 class="mb-0">Apply Request</h5>
+                  <span class="badge @if(!empty($isPermissionDisabled)) bg-danger @else bg-info text-dark @endif py-1 px-2" id="permissionCountBadge" style="font-size:0.75rem;">
+                    <i class="bi bi-clock-history me-1"></i> Permissions: <span id="permUsedNum">{{ $permissionsThisMonth ?? 0 }}</span>/2 Used
+                  </span>
+                </div>
+
                 <form id="leaveForm">
                   <input type="hidden" name="employee_id" value="{{ $employee->employee_id }}">
+
+                  {{-- Request Category Selector (Leave vs Permission) --}}
                   <div class="mb-3">
-                    <label class="form-label small fw-semibold">Type</label>
-                    <select name="type" class="form-select form-select-sm" required>
+                    <label class="form-label small fw-semibold d-block">Select Request Type</label>
+                    <div class="btn-group w-100" role="group" id="categoryToggleGroup">
+                      <input type="radio" class="btn-check" name="request_category" id="catLeave" value="leave" checked>
+                      <label class="btn btn-outline-primary btn-sm py-2 fw-semibold" for="catLeave">
+                        <i class="bi bi-calendar-event me-1"></i> Leave
+                      </label>
+
+                      <input type="radio" class="btn-check" name="request_category" id="catPermission" value="permission" @if(!empty($isPermissionDisabled)) disabled @endif>
+                      <label class="btn btn-outline-primary btn-sm py-2 fw-semibold position-relative @if(!empty($isPermissionDisabled)) disabled opacity-50 @endif" id="catPermLabel" for="catPermission" @if(!empty($isPermissionDisabled)) title="Monthly limit of 2 permissions reached. Permission is disabled." @endif>
+                        <i class="bi bi-clock-history me-1"></i> Permission (1 hr)
+                        @if(!empty($isPermissionDisabled))
+                          <span class="badge bg-danger ms-1" id="permBtnBadge" style="font-size: 0.65rem;">Disabled (2/2 Used)</span>
+                        @else
+                          <span class="badge bg-info text-dark ms-1" id="permBtnBadge" style="font-size: 0.65rem;">{{ 2 - ($permissionsThisMonth ?? 0) }}/2 Left</span>
+                        @endif
+                      </label>
+                    </div>
+                  </div>
+
+                  @if(!empty($isPermissionDisabled))
+                  <div class="alert alert-warning p-2 mb-3 small d-flex align-items-center gap-2" id="permDisabledNotice" style="background:#fff3cd;border-color:#ffeeba;color:#856404;border-radius:8px;">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                    <div>You have used all 2 permissions (2 hours) for this month. <strong>Permission is disabled.</strong> Please apply for Leave.</div>
+                  </div>
+                  @endif
+
+                  {{-- Leave Type Dropdown (Shown when Leave is selected) --}}
+                  <div class="mb-3" id="leaveTypeWrapper">
+                    <label class="form-label small fw-semibold">Leave Type</label>
+                    <select name="type" id="leaveTypeSelect" class="form-select form-select-sm" required>
                       <option value="Sick Leave">Sick Leave</option>
                       <option value="Casual Leave">Casual Leave</option>
                       <option value="Earned Leave">Earned Leave</option>
-                      <option value="Permission">Permission</option>
+                      <option value="Half Day Leave">Half Day Leave</option>
                       <option value="Other">Other</option>
                     </select>
                   </div>
+
+                  {{-- Permission Info Notice (Shown when Permission is selected) --}}
+                  <div id="permissionInfoNotice" class="p-2 mb-3 rounded small d-none" style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #0284c7;">
+                    <i class="bi bi-info-circle-fill me-1"></i>
+                    <strong>1-Hour Permission:</strong> Automatically approved. Limit: 1 hour/day, max 2 permissions/month. Currently used: <strong id="permNoticeUsed">{{ $permissionsThisMonth ?? 0 }}/2</strong> this month.
+                  </div>
+
                   <div class="row g-2 mb-3">
-                    <div class="col-6">
-                      <label class="form-label small fw-semibold">From</label>
-                      <input type="date" name="from_date" class="form-control form-control-sm" required>
+                    <div class="col-6" id="fromDateCol">
+                      <label class="form-label small fw-semibold" id="fromDateLabel">From Date</label>
+                      <input type="date" name="from_date" id="leaveFromDate" class="form-control form-control-sm" required>
                     </div>
-                    <div class="col-6">
-                      <label class="form-label small fw-semibold">To</label>
-                      <input type="date" name="to_date" class="form-control form-control-sm" required>
+                    <div class="col-6" id="toDateCol">
+                      <label class="form-label small fw-semibold" id="toDateLabel">To Date</label>
+                      <input type="date" name="to_date" id="leaveToDate" class="form-control form-control-sm" required>
                     </div>
                   </div>
+
                   <div class="mb-3">
                     <label class="form-label small fw-semibold">Reason</label>
                     <textarea name="reason" class="form-control form-control-sm" rows="3" placeholder="Brief reason..."></textarea>
                   </div>
+
                   <div id="leaveMsg" class="small mb-2"></div>
-                  <button type="submit" class="btn btn-accent btn-sm w-100"><i class="bi bi-send"></i> Submit Request</button>
+                  <button type="submit" id="leaveSubmitBtn" class="btn btn-accent btn-sm w-100"><i class="bi bi-send"></i> Submit Request</button>
                 </form>
               </div>
             </div>
@@ -1466,7 +1531,12 @@
                     <tbody>
                       @forelse($leaves as $l)
                       <tr>
-                        <td>{{ $l->type }}</td>
+                        <td>
+                          {{ $l->type }}
+                          @if($l->hours)
+                            <span class="text-muted small">({{ $l->hours }}h)</span>
+                          @endif
+                        </td>
                         <td class="mono">{{ $l->from_date->format('d M Y') }} &rarr; {{ $l->to_date->format('d M Y') }}</td>
                         <td>{{ $l->reason ?? '—' }}</td>
                         <td>
@@ -1503,7 +1573,7 @@
             </div>
             @forelse($notifications as $n)
             <div class="notif-item @if(!$n->is_read) unread @endif">
-              <div class="notif-ic" style="background:var(--accent-soft);color:var(--accent);"><i class="bi {{ $n->type ?? 'bi-bell-fill' }}"></i></div>
+              <div class="notif-ic" style="@if($n->type === 'bi-cake2-fill') background:rgba(236,72,153,0.15);color:#ec4899; @elseif($n->type === 'bi-award-fill') background:rgba(14,165,233,0.15);color:#0284c7; @elseif($n->type === 'bi-check-circle-fill') background:rgba(10,133,119,0.15);color:#0a8577; @else background:var(--accent-soft);color:var(--accent); @endif"><i class="bi {{ $n->type ?? 'bi-bell-fill' }}"></i></div>
               <div>
                 <div class="fw-semibold" style="font-size:.88rem;">{{ $n->title }}</div>
                 <div class="small" style="color:var(--text-soft);">{{ $n->body }}</div>
@@ -1849,25 +1919,76 @@
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
+    // Request Category Switch (Leave vs Permission)
+    $('input[name=request_category]').on('change', function() {
+      var cat = $(this).val();
+      if (cat === 'permission') {
+        $('#leaveTypeWrapper').addClass('d-none');
+        $('#permissionInfoNotice').removeClass('d-none');
+        $('#toDateCol').addClass('d-none');
+        $('#fromDateCol').removeClass('col-6').addClass('col-12');
+        $('#fromDateLabel').text('Permission Date (1 Hour)');
+        $('#leaveToDate').val($('#leaveFromDate').val());
+        $('#leaveSubmitBtn').html('<i class="bi bi-send"></i> Submit Permission Request (1 hr)');
+
+        if (!$('#hiddenPermType').length) {
+          $('#leaveForm').append('<input type="hidden" name="type" id="hiddenPermType" value="Permission">');
+        }
+        $('#leaveTypeSelect').prop('disabled', true);
+      } else {
+        $('#leaveTypeWrapper').removeClass('d-none');
+        $('#permissionInfoNotice').addClass('d-none');
+        $('#toDateCol').removeClass('d-none');
+        $('#fromDateCol').removeClass('col-12').addClass('col-6');
+        $('#fromDateLabel').text('From Date');
+        $('#leaveSubmitBtn').html('<i class="bi bi-send"></i> Submit Request');
+
+        $('#hiddenPermType').remove();
+        $('#leaveTypeSelect').prop('disabled', false);
+      }
+    });
+
+    $('#leaveFromDate').on('change', function() {
+      if ($('input[name=request_category]:checked').val() === 'permission') {
+        $('#leaveToDate').val($(this).val());
+      }
+    });
+
     $('#leaveForm').on('submit', function(e) {
       e.preventDefault();
       var $msg = $('#leaveMsg');
       $msg.removeClass('text-danger text-success').text('');
       var $form = $(this);
+
+      // Ensure to_date matches from_date for permission
+      if ($('input[name=request_category]:checked').val() === 'permission') {
+        $('#leaveToDate').val($('#leaveFromDate').val());
+      }
+
       $.post('{{ route("employee.leave") }}', $form.serialize())
         .done(function(resp) {
-          $msg.addClass('text-success').text(resp.message || 'Leave request submitted successfully.');
+          $msg.addClass('text-success').text(resp.message || 'Request submitted successfully.');
           
-          var type = $form.find('select[name=type]').val();
-          var fromDate = $form.find('input[name=from_date]').val();
-          var toDate = $form.find('input[name=to_date]').val();
-          var reason = $form.find('textarea[name=reason]').val();
+          var leaveObj = resp.leave || {};
+          var type = leaveObj.type || ($('input[name=request_category]:checked').val() === 'permission' ? 'Permission' : $form.find('select[name=type]').val());
+          var fromDate = leaveObj.from_date ? String(leaveObj.from_date).substring(0, 10) : $form.find('input[name=from_date]').val();
+          var toDate = leaveObj.to_date ? String(leaveObj.to_date).substring(0, 10) : $form.find('input[name=to_date]').val();
+          var reason = leaveObj.reason || $form.find('textarea[name=reason]').val();
+          var status = leaveObj.status || (resp.auto_approved ? 'Approved' : 'Pending');
+          var hours = leaveObj.hours ? ' <span class="text-muted small">(' + leaveObj.hours + 'h)</span>' : '';
+
+          var statusPill = '<span class="pill pill-amber">Pending</span>';
+          if (status === 'Approved') {
+            statusPill = '<span class="pill pill-teal">Approved</span>';
+          } else if (status === 'Rejected') {
+            statusPill = '<span class="pill pill-coral">Rejected</span>';
+          }
 
           var newRow = '<tr>' +
-            '<td>' + escapeHtml(type) + '</td>' +
+            '<td>' + escapeHtml(type) + hours + '</td>' +
             '<td class="mono">' + escapeHtml(fromDate) + ' &rarr; ' + escapeHtml(toDate) + '</td>' +
             '<td>' + (reason ? escapeHtml(reason) : '—') + '</td>' +
-            '<td><span class="pill pill-amber">Pending</span></td>' +
+            '<td>' + statusPill + '</td>' +
             '</tr>';
 
           var $tbody = $('#view-leave table.tbl tbody');
@@ -1876,8 +1997,39 @@
           }
           $tbody.prepend(newRow);
 
+          // Update permission counters and disable state if applicable
+          if (resp.used_count !== undefined) {
+            $('#permUsedNum').text(resp.used_count);
+            $('#permNoticeUsed').text(resp.used_count + '/2');
+            var remaining = Math.max(0, 2 - resp.used_count);
+            $('#permBtnBadge').text(remaining + '/2 Left');
+          }
+
+          if (resp.is_now_disabled) {
+            $('#catPermission').prop('disabled', true);
+            $('#catPermLabel').addClass('disabled opacity-50').attr('title', 'Monthly limit of 2 permissions reached. Permission is disabled.');
+            $('#permBtnBadge').removeClass('bg-info text-dark').addClass('bg-danger').text('Disabled (2/2 Used)');
+            $('#permissionCountBadge').removeClass('bg-info text-dark').addClass('bg-danger');
+
+            // Switch back to leave
+            $('#catLeave').prop('checked', true).trigger('change');
+            if (!$('#permDisabledNotice').length) {
+              $('#leaveForm').before('<div class="alert alert-warning p-2 mb-3 small d-flex align-items-center gap-2" id="permDisabledNotice" style="background:#fff3cd;border-color:#ffeeba;color:#856404;border-radius:8px;"><i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i><div>You have used all 2 permissions (2 hours) for this month. <strong>Permission is disabled.</strong> Please apply for Leave.</div></div>');
+            }
+          }
+
           $form[0].reset();
-          setTimeout(function() { $msg.text(''); }, 3500);
+          $('#hiddenPermType').remove();
+          $('#leaveTypeSelect').prop('disabled', false);
+          $('#catLeave').prop('checked', true);
+          $('#leaveTypeWrapper').removeClass('d-none');
+          $('#permissionInfoNotice').addClass('d-none');
+          $('#toDateCol').removeClass('d-none');
+          $('#fromDateCol').removeClass('col-12').addClass('col-6');
+          $('#fromDateLabel').text('From Date');
+          $('#leaveSubmitBtn').html('<i class="bi bi-send"></i> Submit Request');
+
+          setTimeout(function() { $msg.text(''); }, 5000);
         })
         .fail(function(xhr) {
           var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Failed to submit request.';

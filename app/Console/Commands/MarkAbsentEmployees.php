@@ -43,6 +43,8 @@ class MarkAbsentEmployees extends Command
             }
         }
 
+        \App\Services\EmployeeNotificationService::checkDailyAnniversariesAndBirthdays();
+
         $this->info("Marked {$count} employees as absent for {$today->toDateString()}");
     }
 }

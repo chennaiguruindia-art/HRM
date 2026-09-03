@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
+use App\Services\EmployeeNotificationService;
 use App\Services\SimpleXlsxReader;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
@@ -99,6 +100,7 @@ class ApiController extends Controller
     public function dashboardStats(): JsonResponse
     {
         Attendance::processAutoClockOuts();
+        EmployeeNotificationService::checkDailyAnniversariesAndBirthdays();
 
         $branchId = $this->branchScope();
         $empIds = $this->branchEmployeeIds();
@@ -566,6 +568,7 @@ class ApiController extends Controller
                 'id' => $l->id,
                 'name' => $name ?? 'Unknown',
                 'type' => $l->type,
+                'hours' => $l->hours,
                 'from' => $l->from_date->format('Y-m-d'),
                 'to' => $l->to_date->format('Y-m-d'),
                 'reason' => $l->reason ?? '',
@@ -603,10 +606,22 @@ class ApiController extends Controller
                 $start = Carbon::parse($leave->from_date);
                 $end = Carbon::parse($leave->to_date);
                 for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
-                    Attendance::updateOrCreate(
-                        ['employee_id' => $employee->employee_id, 'date' => $date->toDateString()],
-                        ['status' => 'On Leave', 'notes' => $leave->type]
-                    );
+                    if (strtolower($leave->type) === 'permission') {
+                        Attendance::updateOrCreate(
+                            ['employee_id' => $employee->employee_id, 'date' => $date->toDateString()],
+                            ['notes' => 'Permission (' . ($leave->hours ?? 1) . ' hr)']
+                        );
+                    } elseif (stripos($leave->type, 'Half Day') !== false) {
+                        Attendance::updateOrCreate(
+                            ['employee_id' => $employee->employee_id, 'date' => $date->toDateString()],
+                            ['status' => 'half-day', 'notes' => $leave->type]
+                        );
+                    } else {
+                        Attendance::updateOrCreate(
+                            ['employee_id' => $employee->employee_id, 'date' => $date->toDateString()],
+                            ['status' => 'On Leave', 'notes' => $leave->type]
+                        );
+                    }
                 }
             }
         }
@@ -684,6 +699,8 @@ class ApiController extends Controller
 
     public function notifications(): JsonResponse
     {
+        EmployeeNotificationService::checkDailyAnniversariesAndBirthdays();
+
         $empIds = $this->branchEmployeeIds();
         $notifications = Notification::query()
             ->when($empIds !== null, fn ($q) => $q->whereIn('employee_id', $empIds))
