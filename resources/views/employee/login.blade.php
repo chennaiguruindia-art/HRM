@@ -5,458 +5,533 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <meta name="theme-color" content="#0a8577">
+  <meta name="theme-color" content="#0d9488">
   <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
   <link rel="apple-touch-icon" href="{{ asset('pwa/icons/icon-192.png') }}">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>Employee Attendance - Guru Group</title>
+  <title>Employee Attendance — Guru Group</title>
   <link rel="icon" type="image/png" href="{{ asset('logo/guru.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
   <style>
-    * {
+    *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
-    html,
-    body {
-      height: 100%;
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --border: #e2e8f0;
+      --border-focus: #0d9488;
+      --teal: #0d9488;
+      --teal-hover: #0f766e;
+      --teal-light: #f0fdfa;
+      --rose: #e11d48;
+      --rose-hover: #be123c;
+      --rose-light: #fff1f2;
+      --shadow-card: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+      --radius: 16px;
     }
 
     body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #0f1225 0%, #1a2340 50%, #0f1225 100%);
-      background-attachment: fixed;
-      color: #fff;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 100% 0%, rgba(13, 148, 136, 0.06) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
+      color: var(--text-main);
+      min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      /* fallback for old browsers */
-      min-height: 100svh;
-      /* small viewport height: excludes browser UI */
-      min-height: 100dvh;
-      /* dynamic viewport height: tracks address-bar show/hide */
-      padding: 20px;
-      overflow-x: hidden;
+      padding: 24px 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .card {
-      background: rgba(255, 255, 255, .06);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, .1);
-      border-radius: 20px;
-      padding: 36px 32px;
+    .portal-container {
       width: 100%;
       max-width: 440px;
-      text-align: center;
       margin: auto;
     }
 
-    .brand {
-      font-family: 'Sora', sans-serif;
-      font-size: 1.3rem;
-      font-weight: 700;
-      margin-bottom: 4px;
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      padding: 36px 32px;
+      text-align: center;
     }
 
-    .brand-logo {
-      height: 44px;
-      width: auto;
-      max-width: 100%;
-      object-fit: contain;
-      margin-bottom: 10px;
-    }
-
-    .brand span {
-      color: #0fb5a3;
-    }
-
-    .brand small {
-      color: #6f7794;
-      font-weight: 500;
-      font-size: .75rem;
-      display: block;
-      margin-top: 2px;
-    }
-
-    .clock-wrap {
-      margin: 20px 0 24px;
-    }
-
-    .clock-time {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 2.6rem;
-      font-weight: 500;
-      letter-spacing: 3px;
-      color: #0fb5a3;
-    }
-
-    .clock-date {
-      font-size: .82rem;
-      color: #6f7794;
-      margin-top: 4px;
-    }
-
-    .input-group {
-      display: flex;
-      gap: 8px;
+    /* Brand Header */
+    .brand-section {
       margin-bottom: 20px;
     }
 
-    .input-group input {
+    .brand-logo {
+      height: 48px;
+      width: auto;
+      object-fit: contain;
+      margin-bottom: 12px;
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title span {
+      color: var(--teal);
+    }
+
+    .brand-subtitle {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+
+    /* Clock Widget */
+    .clock-widget {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin: 18px 0 24px;
+    }
+
+    .clock-digits {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.85rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--teal);
+      line-height: 1.2;
+    }
+
+    .clock-date {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: 4px;
+    }
+
+    /* Input Group */
+    .input-wrapper {
+      margin-bottom: 18px;
+    }
+
+    .input-label {
+      display: block;
+      text-align: left;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-field {
       flex: 1;
       min-width: 0;
-      padding: 10px 14px;
+      padding: 11px 14px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: var(--text-main);
+      background: #ffffff;
+      border: 1.5px solid var(--border);
       border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, .12);
-      background: rgba(255, 255, 255, .06);
-      color: #fff;
-      font-size: .9rem;
       outline: none;
-      font-family: 'JetBrains Mono', monospace;
+      transition: all 0.2s ease;
     }
 
-    .input-group input::placeholder {
-      color: #6f7794;
+    .input-field:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
     }
 
-    .input-group input:focus {
-      border-color: #0fb5a3;
+    .input-field::placeholder {
+      color: var(--text-light);
     }
 
-    .input-group button {
-      padding: 10px 18px;
-      border-radius: 10px;
-      border: none;
-      background: #0fb5a3;
-      color: #fff;
+    .btn-verify {
+      padding: 11px 18px;
+      font-size: 0.88rem;
       font-weight: 600;
-      font-size: .85rem;
+      font-family: inherit;
+      color: #ffffff;
+      background: var(--teal);
+      border: none;
+      border-radius: 10px;
       cursor: pointer;
+      transition: background 0.2s ease;
       white-space: nowrap;
     }
 
-    .input-group button:hover {
-      background: #0d9e8e;
+    .btn-verify:hover:not(:disabled) {
+      background: var(--teal-hover);
     }
 
-    .input-group button:disabled {
-      opacity: .5;
+    .btn-verify:disabled {
+      opacity: 0.6;
       cursor: not-allowed;
     }
 
-    .emp-info {
+    /* Loading Spinner */
+    .spinner {
       display: none;
-      background: rgba(255, 255, 255, .05);
-      border-radius: 14px;
-      padding: 18px;
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(13, 148, 136, 0.2);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 16px auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Employee Info Card */
+    .emp-profile {
+      display: none;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
       margin-bottom: 20px;
       text-align: left;
     }
 
-    .emp-info.show {
+    .emp-profile.show {
       display: block;
+      animation: fadeIn 0.25s ease;
     }
 
-    .emp-info .top {
+    .emp-profile-top {
       display: flex;
       align-items: center;
       gap: 12px;
       margin-bottom: 12px;
     }
 
-    .emp-info .top img {
+    .emp-avatar {
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .emp-info .top .name {
-      font-weight: 600;
-      font-size: .95rem;
-    }
-
-    .emp-info .top .role {
-      font-size: .78rem;
-      color: #9499b5;
-    }
-
-    .emp-info .detail {
+      background: var(--teal);
+      color: #ffffff;
       display: flex;
-      gap: 12px;
-      font-size: .8rem;
-      color: #9499b5;
-    }
-
-    .emp-info .detail span {
-      flex: 1;
-    }
-
-    .emp-info .detail strong {
-      color: #fff;
-      display: block;
-      font-size: .82rem;
-      margin-top: 2px;
-    }
-
-    .btn-group {
-      display: none;
-      gap: 12px;
-    }
-
-    .btn-group.show {
-      display: flex;
-    }
-
-    .btn-group .btn {
-      flex: 1;
-      padding: 14px;
-      border-radius: 12px;
-      border: none;
-      font-weight: 600;
-      font-size: .9rem;
-      cursor: pointer;
-      transition: background .2s, opacity .2s;
-    }
-
-    .btn-group .btn:disabled {
-      opacity: .35;
-      cursor: not-allowed;
-    }
-
-    .btn-clock-in {
-      background: #0fb5a3;
-      color: #fff;
-    }
-
-    .btn-clock-in:hover:not(:disabled) {
-      background: #0d9e8e;
-    }
-
-    .btn-clock-out {
-      background: #ef5d6f;
-      color: #fff;
-    }
-
-    .btn-clock-out:hover:not(:disabled) {
-      background: #d94a5c;
-    }
-
-    .msg {
-      margin-top: 16px;
-      font-size: .82rem;
-      padding: 10px 14px;
-      border-radius: 10px;
-      display: none;
-    }
-
-    .msg.success {
-      display: block;
-      background: rgba(15, 181, 163, .15);
-      color: #0fb5a3;
-    }
-
-    .msg.error {
-      display: block;
-      background: rgba(239, 93, 111, .15);
-      color: #ef5d6f;
-    }
-
-    .msg.info {
-      display: block;
-      background: rgba(79, 91, 213, .15);
-      color: #7b85d8;
-    }
-
-    .back-link {
-      display: inline-block;
-      margin-top: 18px;
-      color: #6f7794;
-      font-size: .8rem;
-      text-decoration: none;
-      pointer-events: none;
-      opacity: .55;
-    }
-
-    .back-link:hover {
-      color: #fff;
-    }
-
-    .back-link.enabled {
-      pointer-events: auto;
-      opacity: 1;
-      background: rgba(15, 181, 163, .15);
-      color: #0fb5a3;
-      border: 1px solid rgba(15, 181, 163, .4);
-      padding: 9px 20px;
-      border-radius: 30px;
-      font-weight: 600;
-    }
-
-    .back-link.enabled:hover {
-      background: rgba(15, 181, 163, .28);
-      color: #0fb5a3;
-    }
-
-    .spinner {
-      display: none;
-      width: 18px;
-      height: 18px;
-      border: 2px solid rgba(255, 255, 255, .2);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin .6s linear infinite;
-      margin: 0 auto;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .hours-badge {
-      font-size: .78rem;
-      color: #9499b5;
-      margin-top: 10px;
-      display: none;
-    }
-
-    .hours-badge.show {
-      display: block;
-    }
-
-    /* Daily report modal for clock out */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 12, 25, .75);
-      backdrop-filter: blur(6px);
-      z-index: 1000;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      flex-shrink: 0;
     }
 
-    .modal-overlay.show {
+    .emp-profile-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .emp-profile-role {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .emp-profile-meta {
+      display: flex;
+      gap: 16px;
+      border-top: 1px dashed var(--border);
+      padding-top: 10px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .emp-profile-meta strong {
+      display: block;
+      color: var(--text-main);
+      font-size: 0.82rem;
+      margin-top: 1px;
+    }
+
+    /* Action Buttons */
+    .actions-row {
+      display: none;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .actions-row.show {
       display: flex;
     }
 
-    .modal-panel {
-      background: #1a2340;
-      border: 1px solid rgba(255, 255, 255, .12);
-      border-radius: 16px;
-      padding: 22px;
-      width: 100%;
-      max-width: 460px;
-    }
-
-    .modal-head {
+    .btn-action {
+      flex: 1;
+      padding: 13px 16px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      font-family: inherit;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 6px;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
     }
 
-    .modal-close {
-      background: none;
-      border: none;
-      color: #9499b5;
-      font-size: 1.2rem;
-      line-height: 1;
-      cursor: pointer;
-      padding: 4px;
+    .btn-action svg {
+      width: 18px;
+      height: 18px;
     }
 
-    .btn-ghost {
-      background: rgba(255, 255, 255, .08);
-      border: 1px solid rgba(255, 255, 255, .15);
-      color: #fff;
-      padding: 12px 18px;
-      border-radius: 12px;
+    .btn-action:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      filter: grayscale(40%);
+    }
+
+    .btn-clockin {
+      background: var(--teal);
+      color: #ffffff;
+    }
+
+    .btn-clockin:hover:not(:disabled) {
+      background: var(--teal-hover);
+    }
+
+    .btn-clockout {
+      background: var(--rose);
+      color: #ffffff;
+    }
+
+    .btn-clockout:hover:not(:disabled) {
+      background: var(--rose-hover);
+    }
+
+    /* Hours Worked Badge */
+    .hours-pill {
+      display: none;
+      font-size: 0.82rem;
       font-weight: 600;
-      font-size: .85rem;
-      cursor: pointer;
+      color: var(--teal-hover);
+      background: var(--teal-light);
+      border: 1px solid rgba(13, 148, 136, 0.2);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      margin: 10px auto;
     }
 
-    .btn-ghost:hover {
-      background: rgba(255, 255, 255, .14);
+    .hours-pill.show {
+      display: inline-block;
     }
 
-    /* Smaller phones / short viewports: tighten spacing so nothing feels
-       like it's floating in a huge empty gradient */
-    @media (max-width: 420px) {
+    /* Messages / Alerts */
+    .alert-box {
+      display: none;
+      font-size: 0.82rem;
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-top: 14px;
+      text-align: left;
+    }
+
+    .alert-box.success {
+      display: block;
+      background: var(--teal-light);
+      border: 1px solid rgba(13, 148, 136, 0.3);
+      color: #0f766e;
+    }
+
+    .alert-box.error {
+      display: block;
+      background: var(--rose-light);
+      border: 1px solid rgba(225, 29, 72, 0.3);
+      color: var(--rose-hover);
+    }
+
+    .alert-box.info {
+      display: block;
+      background: #eff6ff;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #1d4ed8;
+    }
+
+    /* Dashboard Link */
+    .btn-dashboard {
+      display: none;
+      width: 100%;
+      margin-top: 14px;
+      padding: 11px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 10px;
+      text-align: center;
+      transition: all 0.2s ease;
+      background: #f1f5f9;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+
+    .btn-dashboard.enabled {
+      display: block;
+      background: var(--teal-light);
+      color: var(--teal-hover);
+      border-color: rgba(13, 148, 136, 0.3);
+    }
+
+    .btn-dashboard.enabled:hover {
+      background: #ccfbf1;
+    }
+
+    /* Back Link */
+    .back-nav {
+      margin-top: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .back-nav:hover {
+      color: var(--text-main);
+    }
+
+    .back-nav svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 480px) {
       .card {
-        padding: 28px 22px;
-        border-radius: 16px;
+        padding: 28px 20px;
       }
-
-      .clock-time {
-        font-size: 2.1rem;
-        letter-spacing: 2px;
-      }
-
-      .clock-wrap {
-        margin: 16px 0 20px;
-      }
-    }
-
-    @media (max-height: 700px) {
-      body {
-        align-items: flex-start;
-        padding-top: 40px;
+      .clock-digits {
+        font-size: 1.6rem;
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="card">
-    <img src="{{ asset('logo/guru.png') }}" class="brand-logo" alt="Guru Group">
-    <div class="brand">Guru Group <span>Attendance</span><small>Employee Portal</small></div>
 
-    <div class="clock-wrap">
-      <div class="clock-time" id="liveTime">--:--:--</div>
-      <div class="clock-date" id="liveDate">---</div>
-    </div>
+  <div class="portal-container">
+    
+    <div class="card">
+      
+      <!-- Logo & Titles -->
+      <div class="brand-section">
+        <img src="{{ asset('logo/guru.png') }}" class="brand-logo" alt="Guru Group">
+        <h1 class="brand-title">Guru Group <span>Attendance</span></h1>
+        <div class="brand-subtitle">Employee Portal</div>
+      </div>
 
-    <div class="input-group">
-      <input type="text" id="empIdInput" placeholder="Enter Employee ID" autocomplete="off">
-      <button id="lookupBtn" onclick="lookupEmployee()">Verify</button>
-    </div>
+      <!-- Live Clock -->
+      <div class="clock-widget">
+        <div class="clock-digits" id="liveTime">--:--:--</div>
+        <div class="clock-date" id="liveDate">Loading date...</div>
+      </div>
 
-    <div class="spinner" id="spinner"></div>
-
-    <div class="emp-info" id="empInfo">
-      <div class="top">
-        <div class="avatar-letter" id="empAvatar" style="width:48px;height:48px;font-size:1.2rem;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;text-transform:uppercase;flex-shrink:0;">-</div>
-        <div>
-          <div class="name" id="empName">-</div>
-          <div class="role" id="empRole">-</div>
+      <!-- Employee ID Input -->
+      <div class="input-wrapper">
+        <label for="empIdInput" class="input-label">Employee ID</label>
+        <div class="input-row">
+          <input type="text" id="empIdInput" class="input-field" placeholder="Enter ID (e.g. 1001)" autocomplete="off">
+          <button id="lookupBtn" class="btn-verify" onclick="lookupEmployee()">Verify</button>
         </div>
       </div>
-      <div class="detail">
-        <span>Branch <strong id="empBranch">-</strong></span>
-        <span>Employee ID <strong id="empId">-</strong></span>
+
+      <!-- Spinner -->
+      <div class="spinner" id="spinner"></div>
+
+      <!-- Verified Employee Info -->
+      <div class="emp-profile" id="empInfo">
+        <div class="emp-profile-top">
+          <div class="emp-avatar" id="empAvatar">-</div>
+          <div>
+            <div class="emp-profile-name" id="empName">-</div>
+            <div class="emp-profile-role" id="empRole">-</div>
+          </div>
+        </div>
+        <div class="emp-profile-meta">
+          <div>Branch: <strong id="empBranch">-</strong></div>
+          <div>ID: <strong id="empId">-</strong></div>
+        </div>
       </div>
+
+      <!-- Clock In / Out Action Buttons -->
+      <div class="actions-row" id="btnGroup">
+        <button class="btn-action btn-clockin" id="clockInBtn" onclick="doClockIn()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Clock In
+        </button>
+        <button class="btn-action btn-clockout" id="clockOutBtn" onclick="doClockOut()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          Clock Out
+        </button>
+      </div>
+
+      <!-- Hours Badge -->
+      <div class="hours-pill" id="hoursBadge"></div>
+
+      <!-- Feedback Messages -->
+      <div class="alert-box" id="msg"></div>
+
+      <!-- Dashboard Link -->
+      <a href="/" class="btn-dashboard" id="dashLink">Go to Employee Dashboard &rarr;</a>
+
     </div>
 
-    <div class="btn-group" id="btnGroup">
-      <button class="btn btn-clock-in" id="clockInBtn" onclick="doClockIn()">Clock In</button>
-      <button class="btn btn-clock-out" id="clockOutBtn" onclick="doClockOut()">Clock Out</button>
+    <!-- Back to Home -->
+    <div style="text-align: center;">
+      <a href="{{ url('/') }}" class="back-nav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to Portal Selection
+      </a>
     </div>
-    <div class="hours-badge" id="hoursBadge"></div>
 
-    <div class="msg" id="msg"></div>
-
-    <a href="/" class="back-link" id="dashLink"> Employee dashboard &rarr;</a>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -499,13 +574,17 @@
 
     function updateClock() {
       const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
-      const m = String(now.getMinutes()).padStart(2, '0');
-      const s = String(now.getSeconds()).padStart(2, '0');
-      document.getElementById('liveTime').textContent = h + ':' + m + ':' + s;
-      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-      document.getElementById('liveDate').textContent = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
+      let hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? String(hours).padStart(2, '0') : '12';
+      
+      document.getElementById('liveTime').textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
+      
+      const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+      document.getElementById('liveDate').textContent = now.toLocaleDateString('en-US', options);
     }
     updateClock();
     setInterval(updateClock, 1000);
@@ -517,9 +596,11 @@
     function showMsg(text, type) {
       const el = $('#msg');
       el.removeClass('success error info').addClass(type).text(text).show();
-      if (type !== 'error') setTimeout(function() {
-        el.fadeOut();
-      }, 4000);
+      if (type !== 'error') {
+        setTimeout(function() {
+          el.fadeOut();
+        }, 4500);
+      }
     }
 
     function lookupEmployee() {
@@ -539,15 +620,13 @@
       $.ajax({
         url: '{{ route("employee.lookup") }}',
         method: 'POST',
-        data: {
-          employee_id: id
-        }
+        data: { employee_id: id }
       }).done(function(resp) {
         currentEmployeeId = resp.employee.id;
         $('#empAvatar').text(resp.employee.name.charAt(0).toUpperCase());
         $('#empName').text(resp.employee.name);
-        $('#empRole').text(resp.employee.designation);
-        $('#empBranch').text(resp.employee.branch);
+        $('#empRole').text(resp.employee.designation || 'Staff');
+        $('#empBranch').text(resp.employee.branch || 'Main');
         $('#empId').text(resp.employee.id);
         $('#empInfo').addClass('show');
 
@@ -563,12 +642,12 @@
         $('#btnGroup').addClass('show');
 
         if (clockedOut) {
-          showMsg('Day complete. Clock Out at ' + att.check_out, 'info');
+          showMsg('Day complete. Clocked out at ' + att.check_out, 'info');
         } else if (clockedIn) {
-          showMsg('Clocked in at ' + att.check_in + '. Ready for clock out.', 'info');
+          showMsg('Clocked in at ' + att.check_in + '. Ready to clock out.', 'info');
         }
       }).fail(function(xhr) {
-        const msg = xhr.responseJSON ? xhr.responseJSON.message : ('Request failed (HTTP ' + (xhr.status || 'network error') + ')');
+        const msg = xhr.responseJSON ? xhr.responseJSON.message : ('Lookup failed (HTTP ' + (xhr.status || 'network error') + ')');
         showMsg(msg, 'error');
       }).always(function() {
         $('#lookupBtn').prop('disabled', false);
@@ -582,9 +661,7 @@
       $('#clockOutBtn').prop('disabled', true);
       $('#msg').hide().removeClass('success error info');
 
-      const data = {
-        employee_id: currentEmployeeId
-      };
+      const data = { employee_id: currentEmployeeId };
       if (currentLat && currentLng) {
         data.latitude = currentLat;
         data.longitude = currentLng;
@@ -608,19 +685,13 @@
 
     function doClockOut() {
       if (!currentEmployeeId) return;
-      if (!confirm('Are you sure you want to clock out?')) return;
-      submitClockOut();
-    }
-
-    function submitClockOut() {
-      if (!currentEmployeeId) return;
+      if (!confirm('Confirm Clock Out for today?')) return;
+      
       $('#clockInBtn').prop('disabled', true);
       $('#clockOutBtn').prop('disabled', true);
       $('#msg').hide().removeClass('success error info');
 
-      const data = {
-        employee_id: currentEmployeeId
-      };
+      const data = { employee_id: currentEmployeeId };
       if (currentLat && currentLng) {
         data.latitude = currentLat;
         data.longitude = currentLng;
@@ -635,7 +706,7 @@
         showMsg(resp.message, 'success');
         $('#clockOutBtn').prop('disabled', true);
         if (resp.hours_worked) {
-          $('#hoursBadge').text('Total hours: ' + resp.hours_worked).addClass('show');
+          $('#hoursBadge').text('Total Hours: ' + resp.hours_worked).addClass('show');
         }
       }).fail(function(xhr) {
         const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Clock Out failed.';
@@ -644,6 +715,7 @@
       });
     }
   </script>
+
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
