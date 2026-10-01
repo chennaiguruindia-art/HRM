@@ -836,6 +836,12 @@
     <div class="side-link" data-view="daily-plan">
       <i class="bi bi-journal-text"></i> Daily Plan
     </div>
+    <div class="side-link" data-view="leads">
+      <i class="bi bi-person-check-fill"></i> Leads
+    </div>
+    <div class="side-link" data-view="non-leads">
+      <i class="bi bi-person-x-fill"></i> Non-Leads
+    </div>
     <div class="side-link" data-view="old-data">
       <i class="bi bi-file-earmark-spreadsheet-fill"></i> Old Data
     </div>
@@ -1360,12 +1366,82 @@
                     <th>Followup 3</th>
                     <th>Remarks</th>
                     <th>Updated</th>
-                    @if ($isBranchAdmin)
                     <th class="text-end">Actions</th>
-                    @endif
                   </tr>
                 </thead>
                 <tbody id="dailyPlanBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= LEADS VIEW ================= -->
+        <section class="view" id="view-leads">
+          <div class="section-card">
+            <div class="section-head">
+              <h5>Leads</h5>
+              <span class="text-muted small ms-auto">Converted daily plan entries</span>
+            </div>
+            <div class="table-responsive">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Si.No</th>
+                    @if (!$isBranchAdmin)
+                    <th>Branch</th>
+                    @endif
+                    <th>Date</th>
+                    <th>Salesperson</th>
+                    <th>Company Address</th>
+                    <th>Company Details</th>
+                    <th>Purpose of Visit</th>
+                    <th>Type of Service</th>
+                    <th>Inspection</th>
+                    <th>Quotation</th>
+                    <th>Followup 1</th>
+                    <th>Followup 2</th>
+                    <th>Followup 3</th>
+                    <th>Remarks</th>
+                    <th>Updated</th>
+                  </tr>
+                </thead>
+                <tbody id="leadsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= NON-LEADS VIEW ================= -->
+        <section class="view" id="view-non-leads">
+          <div class="section-card">
+            <div class="section-head">
+              <h5>Non-Leads</h5>
+              <span class="text-muted small ms-auto">Rejected daily plan entries</span>
+            </div>
+            <div class="table-responsive">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Si.No</th>
+                    @if (!$isBranchAdmin)
+                    <th>Branch</th>
+                    @endif
+                    <th>Date</th>
+                    <th>Salesperson</th>
+                    <th>Company Address</th>
+                    <th>Company Details</th>
+                    <th>Purpose of Visit</th>
+                    <th>Type of Service</th>
+                    <th>Inspection</th>
+                    <th>Quotation</th>
+                    <th>Followup 1</th>
+                    <th>Followup 2</th>
+                    <th>Followup 3</th>
+                    <th>Remarks</th>
+                    <th>Updated</th>
+                  </tr>
+                </thead>
+                <tbody id="nonLeadsBody"></tbody>
               </table>
             </div>
           </div>
@@ -1980,6 +2056,10 @@
       salaryPreview: "{{ route('admin.api.salary-preview') }}",
       holidays: "{{ route('admin.api.holidays') }}",
       dailyPlans: "{{ route('admin.api.daily-plans') }}",
+      dailyPlanConvert: "{{ route('admin.api.daily-plans.convert') }}",
+      dailyPlanReject: "{{ route('admin.api.daily-plans.reject') }}",
+      leads: "{{ route('admin.api.leads') }}",
+      nonLeads: "{{ route('admin.api.non-leads') }}",
       dailyReports: "{{ route('admin.api.reports.daily') }}",
       employeeStatus: "{{ route('admin.api.employees.status') }}",
       adminList: "{{ route('admin.api.admin-list') }}",
@@ -2041,6 +2121,8 @@
       holidays: ["Holidays", "Manage company holidays"],
       reports: ["Daily Reports", "Branch-wise employee daily reports"],
       "daily-plan": ["Daily Plan", "Track sales visits and followups"],
+      leads: ["Leads", "Converted daily plan entries"],
+      "non-leads": ["Non-Leads", "Rejected daily plan entries"],
       "old-data": ["Old Data", "Upload, view and manage legacy daily work entry records"]
     };
 
@@ -2082,6 +2164,8 @@
       if (viewName === "holidays") loadHolidays();
       if (viewName === "reports") loadReportsView();
       if (viewName === "daily-plan") loadDailyPlans();
+      if (viewName === "leads") loadLeads();
+      if (viewName === "non-leads") loadNonLeads();
       if (viewName === "old-data") loadOldData();
     }
 
@@ -3203,7 +3287,14 @@
         if (IS_BRANCH_ADMIN) {
           html += "<td class='text-end whitespace-nowrap'>" +
             "<span class='action-ic me-1' title='Edit' onclick='editDailyPlan(" + i + ")'><i class='bi bi-pencil-fill'></i></span>" +
-            "<span class='action-ic text-danger' title='Delete' onclick='deleteDailyPlan(" + p.id + ")'><i class='bi bi-trash-fill'></i></span>" +
+            "<span class='action-ic text-danger me-1' title='Delete' onclick='deleteDailyPlan(" + p.id + ")'><i class='bi bi-trash-fill'></i></span>" +
+            "<span class='action-ic me-1' style='color:var(--teal);' title='Convert to Lead' onclick='convertDailyPlan(" + p.id + ")'><i class='bi bi-person-check-fill'></i></span>" +
+            "<span class='action-ic text-danger' title='Reject' onclick='rejectDailyPlan(" + p.id + ")'><i class='bi bi-person-x-fill'></i></span>" +
+            "</td>";
+        } else {
+          html += "<td class='text-end whitespace-nowrap'>" +
+            "<span class='action-ic me-1' style='color:var(--teal);' title='Convert to Lead' onclick='convertDailyPlan(" + p.id + ")'><i class='bi bi-person-check-fill'></i></span>" +
+            "<span class='action-ic text-danger' title='Reject' onclick='rejectDailyPlan(" + p.id + ")'><i class='bi bi-person-x-fill'></i></span>" +
             "</td>";
         }
         html += "</tr>";
@@ -3259,6 +3350,71 @@
         console.error("Saving daily plan failed", xhr.responseJSON || xhr.statusText);
       });
     });
+
+    function convertDailyPlan(id) {
+      if (!confirm("Convert this daily plan entry to a Lead?")) return;
+      apiPost(API.dailyPlanConvert, { id: id }).then(function() {
+        loadDailyPlans();
+      });
+    }
+
+    function rejectDailyPlan(id) {
+      if (!confirm("Reject this daily plan entry? It will move to Non-Leads.")) return;
+      apiPost(API.dailyPlanReject, { id: id }).then(function() {
+        loadDailyPlans();
+      });
+    }
+
+    /* =========================================================================
+       LEADS / NON-LEADS
+       ========================================================================= */
+    function renderLeadRows(bodySel, rows, emptyMsg) {
+      const cols = IS_BRANCH_ADMIN ? 15 : 16;
+      if (!rows.length) {
+        $(bodySel).html('<tr><td colspan="' + cols + '" class="text-center text-muted py-4">' + emptyMsg + '</td></tr>');
+        return;
+      }
+      $(bodySel).html(rows.map(function(p) {
+        let html = "<tr>" +
+          "<td class='mono small'>" + p.sino + "</td>";
+        if (!IS_BRANCH_ADMIN) {
+          html += "<td><span class='badge bg-info bg-opacity-10 text-info'>" + (p.branch || '-') + "</span></td>";
+        }
+        html += "<td class='mono'>" + p.date + "</td>" +
+          "<td>" + (p.salesperson || '-') + "</td>" +
+          "<td>" + (p.company_address || '-') + "</td>" +
+          "<td>" + (p.company_details || '-') + "</td>" +
+          "<td>" + (p.purpose_of_visit || '-') + "</td>" +
+          "<td>" + (p.type_of_service || '-') + "</td>" +
+          "<td>" + (p.inspection || '-') + "</td>" +
+          "<td>" + (p.quotation || '-') + "</td>" +
+          "<td>" + (p.followup1 || '-') + "</td>" +
+          "<td>" + (p.followup2 || '-') + "</td>" +
+          "<td>" + (p.followup3 || '-') + "</td>" +
+          "<td>" + (p.remarks || '-') + "</td>" +
+          "<td class='mono small text-muted'>" + p.updated_at + "</td>" +
+          "</tr>";
+        return html;
+      }).join(""));
+    }
+
+    function loadLeads() {
+      $("#leadsBody").html(skeletonRows(4, IS_BRANCH_ADMIN ? 14 : 15));
+      apiGet(API.leads).then(function(rows) {
+        renderLeadRows("#leadsBody", rows || [], "No leads yet.");
+      }).fail(function() {
+        $("#leadsBody").html('<tr><td colspan="' + (IS_BRANCH_ADMIN ? 14 : 15) + '" class="text-center text-muted py-4">Failed to load leads.</td></tr>');
+      });
+    }
+
+    function loadNonLeads() {
+      $("#nonLeadsBody").html(skeletonRows(4, IS_BRANCH_ADMIN ? 14 : 15));
+      apiGet(API.nonLeads).then(function(rows) {
+        renderLeadRows("#nonLeadsBody", rows || [], "No rejected entries yet.");
+      }).fail(function() {
+        $("#nonLeadsBody").html('<tr><td colspan="' + (IS_BRANCH_ADMIN ? 14 : 15) + '" class="text-center text-muted py-4">Failed to load non-leads.</td></tr>');
+      });
+    }
 
     /* =========================================================================
        DAILY REPORTS

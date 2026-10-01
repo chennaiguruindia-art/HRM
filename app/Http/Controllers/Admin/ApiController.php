@@ -10,6 +10,8 @@ use App\Models\Designation;
 use App\Models\Employee;
 use App\Models\DailyPlan;
 use App\Models\Holiday;
+use App\Models\Lead;
+use App\Models\NonLead;
 use App\Models\LeaveRequest;
 use App\Models\Notification;
 use App\Models\OldData;
@@ -18,6 +20,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
@@ -1147,6 +1150,94 @@ class ApiController extends Controller
         $plan->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    private function planPayload($p, int $sino): array
+    {
+        return [
+            'sino' => $sino,
+            'id' => $p->id,
+            'branch' => $p->branch?->name ?? '-',
+            'date' => $p->date->toDateString(),
+            'salesperson' => $p->salesperson,
+            'company_address' => $p->company_address,
+            'company_details' => $p->company_details,
+            'purpose_of_visit' => $p->purpose_of_visit,
+            'type_of_service' => $p->type_of_service,
+            'inspection' => $p->inspection,
+            'quotation' => $p->quotation,
+            'followup1' => $p->followup1,
+            'followup2' => $p->followup2,
+            'followup3' => $p->followup3,
+            'remarks' => $p->remarks,
+            'updated_at' => $p->updated_at->format('Y-m-d H:i'),
+        ];
+    }
+
+    public function leads(): JsonResponse
+    {
+        $branchId = $this->branchScope();
+
+        $rows = Lead::with('branch')
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->latest('date')
+            ->latest('id')
+            ->get()
+            ->map(fn($p, $i) => $this->planPayload($p, $i + 1));
+
+        return response()->json($rows);
+    }
+
+    public function nonLeads(): JsonResponse
+    {
+        $branchId = $this->branchScope();
+
+        $rows = NonLead::with('branch')
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->latest('date')
+            ->latest('id')
+            ->get()
+            ->map(fn($p, $i) => $this->planPayload($p, $i + 1));
+
+        return response()->json($rows);
+    }
+
+    private function moveDailyPlan(Request $request, string $target): JsonResponse
+    {
+        $branchId = $this->branchScope();
+
+        $plan = DailyPlan::findOrFail($request->id);
+
+        if ($branchId && (int) $plan->branch_id !== $branchId) {
+            abort(403, 'Access denied.');
+        }
+
+        $data = Arr::except($plan->toArray(), ['created_at', 'updated_at']);
+        $data['daily_plan_id'] = $plan->id;
+
+        if ($target === 'lead') {
+            Lead::create($data);
+        } else {
+            NonLead::create($data);
+        }
+
+        $plan->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function convertDailyPlan(Request $request): JsonResponse
+    {
+        $request->validate(['id' => 'required|integer|exists:daily_plans,id']);
+
+        return $this->moveDailyPlan($request, 'lead');
+    }
+
+    public function rejectDailyPlan(Request $request): JsonResponse
+    {
+        $request->validate(['id' => 'required|integer|exists:daily_plans,id']);
+
+        return $this->moveDailyPlan($request, 'non_lead');
     }
 
     public function adminList(): JsonResponse
