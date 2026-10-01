@@ -15,9 +15,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->validateCsrfTokens(except: [
             'admin/api/*',
-            'employee/lookup',
-            'employee/clock-in',
-            'employee/clock-out',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

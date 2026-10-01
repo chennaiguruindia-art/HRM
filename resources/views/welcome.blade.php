@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Guru Group — Attendance & Management Portal. Real-time attendance tracking, payroll, and branch reports.">
-  <title>Guru Group — Attendance & Reports Portal</title>
+  <meta name="description" content="Guru Group — Sales CRM Portal. Daily plan visits, lead conversion and branch-wise sales tracking.">
+  <title>Guru Group — CRM Portal</title>
   <link rel="icon" type="image/png" href="{{ asset('logo/guru.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -448,50 +448,30 @@
 
     <!-- Hero Title -->
     <div class="hero-header">
-      <div class="hero-badge">Enterprise Workforce System</div>
-      <h1 class="hero-title">Attendance & Management Portal</h1>
+      <div class="hero-badge">Sales CRM System</div>
+      <h1 class="hero-title">Customer Relationship Portal</h1>
       <p class="hero-subtitle">
-        Select your portal below to record daily attendance or access branch reports and management analytics.
+        Log daily sales visits, convert prospects into leads and track rejected entries in one place.
       </p>
     </div>
 
     <!-- Portal Cards -->
     <div class="portals-grid">
-      
-      <!-- Employee Portal -->
-      <a href="{{ route('employee.login') }}" class="portal-card portal-employee">
+
+      <!-- Admin CRM Portal -->
+      <a href="{{ route('login') }}" class="portal-card portal-employee">
         <div class="card-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
         </div>
-        <h2 class="card-title">Employee Attendance</h2>
+        <h2 class="card-title">Admin CRM Login</h2>
         <p class="card-desc">
-          Quick verification, GPS-enabled Clock In & Clock Out, daily work hours, and self-service attendance dashboard.
+          Daily plan entries, lead conversion, rejected entries and branch-wise sales tracking.
         </p>
         <div class="card-cta">
-          <span>Clock In / Out</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-            <polyline points="12 5 19 12 12 19"></polyline>
-          </svg>
-        </div>
-      </a>
-
-      <!-- Management & Reports Portal -->
-      <a href="{{ route('reports.login') }}" class="portal-card portal-reports">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-          </svg>
-        </div>
-        <h2 class="card-title">Management & Reports</h2>
-        <p class="card-desc">
-          Branch-level attendance reports, real-time analytics, leave administration, and head office console.
-        </p>
-        <div class="card-cta">
-          <span>Branch Login</span>
+          <span>Login to Dashboard</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
@@ -515,7 +495,7 @@
           <line x1="2" y1="12" x2="22" y2="12"></line>
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
         </svg>
-        <span>GPS Verification</span>
+        <span>Lead Conversion</span>
       </div>
       <div class="feature-pill">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -530,7 +510,7 @@
 
   <!-- Footer -->
   <footer class="site-footer">
-    &copy; {{ date('Y') }} <span>Guru Group</span>. All rights reserved. Attendance & Management System.
+    &copy; {{ date('Y') }} <span>Guru Group</span>. All rights reserved. Sales CRM System.
   </footer>
 
   <script>
