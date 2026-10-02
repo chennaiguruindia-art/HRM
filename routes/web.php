@@ -7,12 +7,24 @@ Route::get('/run-migrations', [App\Http\Controllers\Admin\ApiController::class, 
 Route::get('/run-migrations-fresh', [App\Http\Controllers\Admin\ApiController::class, 'runMigrationsFresh']);
 Route::get('/run-seeders', [App\Http\Controllers\Admin\ApiController::class, 'runSeeders']);
 
-Route::get('/', function () {
+Route::get('/', function (\Illuminate\Http\Request $request) {
+    if (\Illuminate\Support\Facades\Auth::check()) {
+        \Illuminate\Support\Facades\Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+    }
     return view('welcome');
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $user = \Illuminate\Support\Facades\Auth::user();
+    if ($user && $user->role === 'admin') {
+        $dashboardUrl = $user->branch
+            ? route('admin.branch-dashboard', ['slug' => $user->branch->slug()], absolute: false)
+            : route('admin.dashboard', absolute: false);
+        return redirect($dashboardUrl);
+    }
+    return redirect()->route('admin.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/{slug}admin/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])
